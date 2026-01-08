@@ -4,8 +4,7 @@ import { parseDiffFromFile, type FileContents, type FileDiffMetadata } from '@pi
 
 import { useOptionalThemeSystem } from '@/contexts/useThemeSystem';
 import { ScrollableOverlay } from '@/components/ui/ScrollableOverlay';
-import { ensureFlexokiThemesRegistered } from '@/lib/shiki/registerFlexokiThemes';
-import { flexokiThemeNames } from '@/lib/shiki/flexokiThemes';
+import { ensureDiffThemesRegistered, getDiffThemeForUITheme } from '@/lib/diffThemes';
 
 interface PierreDiffViewerProps {
   original: string;
@@ -94,7 +93,7 @@ export const PierreDiffViewer: React.FC<PierreDiffViewerProps> = ({
   const isDark = themeSystem?.currentTheme?.metadata?.variant === 'dark';
   const currentThemeId = themeSystem?.currentTheme?.metadata?.id;
 
-  ensureFlexokiThemesRegistered();
+  ensureDiffThemesRegistered();
 
   // Cache the last computed diff to avoid recomputing on every render
   const diffCacheRef = useRef<{
@@ -134,28 +133,13 @@ export const PierreDiffViewer: React.FC<PierreDiffViewerProps> = ({
   }, [fileName, original, modified, language]);
 
   const options = useMemo(() => {
-    const mapThemeIdToShikiTheme = (themeId: string | undefined): string => {
-      if (themeId === 'vercel-dark') {
-        return flexokiThemeNames.vercelDark;
-      }
-      if (themeId === 'vercel-light') {
-        return flexokiThemeNames.vercelLight;
-      }
-      if (themeId === 'flexoki-dark') {
-        return flexokiThemeNames.dark;
-      }
-      if (themeId === 'flexoki-light') {
-        return flexokiThemeNames.light;
-      }
-      return isDark ? flexokiThemeNames.vercelDark : flexokiThemeNames.vercelLight;
-    };
-
-    const currentShikiTheme = mapThemeIdToShikiTheme(currentThemeId);
+    const darkTheme = getDiffThemeForUITheme(currentThemeId, true);
+    const lightTheme = getDiffThemeForUITheme(currentThemeId, false);
 
     return {
       theme: {
-        dark: currentShikiTheme,
-        light: flexokiThemeNames.vercelLight,
+        dark: darkTheme,
+        light: lightTheme,
       },
       themeType: isDark ? ('dark' as const) : ('light' as const),
       diffStyle: renderSideBySide ? ('split' as const) : ('unified' as const),
