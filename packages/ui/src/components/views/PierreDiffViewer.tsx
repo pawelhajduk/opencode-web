@@ -92,6 +92,7 @@ export const PierreDiffViewer: React.FC<PierreDiffViewerProps> = ({
 }) => {
   const themeSystem = useOptionalThemeSystem();
   const isDark = themeSystem?.currentTheme?.metadata?.variant === 'dark';
+  const currentThemeId = themeSystem?.currentTheme?.metadata?.id;
 
   ensureFlexokiThemesRegistered();
 
@@ -132,22 +133,39 @@ export const PierreDiffViewer: React.FC<PierreDiffViewerProps> = ({
     return diff;
   }, [fileName, original, modified, language]);
 
-  const options = useMemo(() => ({
-    theme: {
-      dark: flexokiThemeNames.dark,
-      light: flexokiThemeNames.light,
-    },
-    themeType: isDark ? ('dark' as const) : ('light' as const),
-    diffStyle: renderSideBySide ? ('split' as const) : ('unified' as const),
-    diffIndicators: 'none' as const,
-    hunkSeparators: 'line-info' as const,
-    lineDiffType: 'word-alt' as const,
-    overflow: wrapLines ? ('wrap' as const) : ('scroll' as const),
-    disableFileHeader: true,
-    enableLineSelection: false,
-    enableHoverUtility: false,
-    unsafeCSS: WEBKIT_SCROLL_FIX_CSS,
-  }), [isDark, renderSideBySide, wrapLines]);
+  const options = useMemo(() => {
+    const mapThemeIdToShikiTheme = (themeId: string | undefined): string => {
+      if (themeId === 'vercel-dark') {
+        return flexokiThemeNames.vercelDark;
+      }
+      if (themeId === 'vercel-light') {
+        return flexokiThemeNames.vercelLight;
+      }
+      if (themeId === 'flexoki-light') {
+        return flexokiThemeNames.light;
+      }
+      return isDark ? flexokiThemeNames.dark : flexokiThemeNames.light;
+    };
+
+    const currentShikiTheme = mapThemeIdToShikiTheme(currentThemeId);
+
+    return {
+      theme: {
+        dark: currentShikiTheme,
+        light: flexokiThemeNames.light,
+      },
+      themeType: isDark ? ('dark' as const) : ('light' as const),
+      diffStyle: renderSideBySide ? ('split' as const) : ('unified' as const),
+      diffIndicators: 'none' as const,
+      hunkSeparators: 'line-info' as const,
+      lineDiffType: 'word-alt' as const,
+      overflow: wrapLines ? ('wrap' as const) : ('scroll' as const),
+      disableFileHeader: true,
+      enableLineSelection: false,
+      enableHoverUtility: false,
+      unsafeCSS: WEBKIT_SCROLL_FIX_CSS,
+    };
+  }, [isDark, currentThemeId, renderSideBySide, wrapLines]);
 
   if (typeof window === 'undefined') {
     return null;
