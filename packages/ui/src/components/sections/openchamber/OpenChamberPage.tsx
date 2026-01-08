@@ -81,7 +81,7 @@ export const OpenChamberPage: React.FC<OpenChamberPageProps> = ({ section }) => 
     );
 };
 
-// Visual section: Theme Mode, Font Size, Spacing, Corner Radius, Input Bar Offset (mobile)
+// Visual section: Theme Mode, Color Scheme, Font Size, Spacing, Corner Radius, Input Bar Offset (mobile)
 const VisualSectionContent: React.FC = () => {
     return <OpenChamberVisualSettings visibleSettings={['theme', 'fontSize', 'spacing', 'cornerRadius', 'inputBarOffset', 'terminalQuickKeys']} />;
 };
