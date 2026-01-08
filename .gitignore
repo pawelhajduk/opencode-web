@@ -27,3 +27,8 @@ local-dev*
 *.sln
 *.sw?
 .opencode/plans/*
+
+# In root .gitignore
+packages/ui/src/assets/fonts/*.woff2
+packages/ui/src/assets/fonts/*.woff
+packages/ui/src/assets/fonts/*.ttf
