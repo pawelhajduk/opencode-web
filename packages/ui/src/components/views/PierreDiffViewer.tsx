@@ -327,6 +327,7 @@ export const PierreDiffViewer: React.FC<PierreDiffViewerProps> = ({
       });
     }
   }, [selection, commentText, original, modified, fileName, language, sendMessage, currentSessionId, currentProviderId, currentModelId, currentAgentName, currentVariant, setActiveMainTab, getSessionAgentSelection, getAgentModelForSession, getAgentModelVariantForSession, queueModeEnabled, sessionPhase, addToQueue]);
+  const currentThemeId = themeSystem?.currentTheme?.metadata?.id;
 
   ensurePierreThemeRegistered(lightTheme);
   ensurePierreThemeRegistered(darkTheme);
