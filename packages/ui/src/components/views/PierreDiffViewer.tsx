@@ -145,6 +145,7 @@ export const PierreDiffViewer: React.FC<PierreDiffViewerProps> = ({
 
   const themeSystem = useOptionalThemeSystem();
   const isDark = themeSystem?.currentTheme?.metadata?.variant === 'dark';
+  const currentThemeId = themeSystem?.currentTheme?.metadata?.id;
 
   const fallbackLight = getDefaultTheme(false);
   const fallbackDark = getDefaultTheme(true);
