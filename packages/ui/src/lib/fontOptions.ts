@@ -1,6 +1,6 @@
-export type UiFontOption = 'ibm-plex-sans';
+export type UiFontOption = 'ibm-plex-sans' | 'geist-sans';
 
-export type MonoFontOption = 'ibm-plex-mono';
+export type MonoFontOption = 'ibm-plex-mono' | 'geist-mono';
 
 export interface FontOptionDefinition<T extends string> {
     id: T;
@@ -15,7 +15,13 @@ export const UI_FONT_OPTIONS: FontOptionDefinition<UiFontOption>[] = [
         id: 'ibm-plex-sans',
         label: 'IBM Plex Sans',
         description: 'Humanist sans-serif for optimal readability in the interface.',
-        stack: '"IBM Plex Sans", "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+        stack: '"IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+    },
+    {
+        id: 'geist-sans',
+        label: 'Geist Sans',
+        description: 'Modern geometric sans-serif designed for clarity.',
+        stack: '"Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
     }
 ];
 
@@ -24,7 +30,13 @@ export const CODE_FONT_OPTIONS: FontOptionDefinition<MonoFontOption>[] = [
         id: 'ibm-plex-mono',
         label: 'IBM Plex Mono',
         description: 'Balanced monospace for code blocks and technical content.',
-        stack: '"IBM Plex Mono", "SFMono-Regular", "Menlo", monospace'
+        stack: '"IBM Plex Mono", "JetBrains Mono", "Fira Code", "SFMono-Regular", "Menlo", monospace'
+    },
+    {
+        id: 'geist-mono',
+        label: 'Geist Mono',
+        description: 'Clean monospace with excellent readability for code.',
+        stack: '"Geist Mono", "JetBrains Mono", "Fira Code", "SFMono-Regular", "Menlo", monospace'
     }
 ];
 
