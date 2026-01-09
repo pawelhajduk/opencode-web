@@ -9,6 +9,7 @@ import { cn, getModifierLabel } from '@/lib/utils';
 import { ButtonSmall } from '@/components/ui/button-small';
 import { NumberInput } from '@/components/ui/number-input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { UI_FONT_OPTIONS, CODE_FONT_OPTIONS, UI_FONT_OPTION_MAP, CODE_FONT_OPTION_MAP } from '@/lib/fontOptions';
 import { isVSCodeRuntime } from '@/lib/desktop';
 import { useDeviceInfo } from '@/lib/device';
 import {
@@ -61,6 +62,7 @@ const DIFF_LAYOUT_OPTIONS: Option<'dynamic' | 'inline' | 'side-by-side'>[] = [
     },
 ];
 
+<<<<<<< HEAD
 const DIFF_VIEW_MODE_OPTIONS: Option<'single' | 'stacked'>[] = [
     {
         id: 'single',
@@ -74,7 +76,7 @@ const DIFF_VIEW_MODE_OPTIONS: Option<'single' | 'stacked'>[] = [
     },
 ];
 
-export type VisibleSetting = 'theme' | 'colorScheme' | 'fontSize' | 'spacing' | 'cornerRadius' | 'inputBarOffset' | 'toolOutput' | 'diffLayout' | 'dotfiles' | 'reasoning' | 'queueMode';
+export type VisibleSetting = 'theme' | 'colorScheme' | 'fonts' | 'fontSize' | 'spacing' | 'cornerRadius' | 'inputBarOffset' | 'toolOutput' | 'diffLayout' | 'dotfiles' | 'reasoning' | 'queueMode';
 
 const COLOR_SCHEME_OPTIONS: Array<{ id: string; label: string; lightThemeId: string; darkThemeId: string }> = [
     { id: 'vercel', label: 'Vercel', lightThemeId: 'vercel-light', darkThemeId: 'vercel-dark' },
@@ -103,6 +105,10 @@ export const OpenChamberVisualSettings: React.FC<OpenChamberVisualSettingsProps>
     const setCornerRadius = useUIStore(state => state.setCornerRadius);
     const inputBarOffset = useUIStore(state => state.inputBarOffset);
     const setInputBarOffset = useUIStore(state => state.setInputBarOffset);
+    const uiFont = useUIStore(state => state.uiFont);
+    const setUiFont = useUIStore(state => state.setUiFont);
+    const monoFont = useUIStore(state => state.monoFont);
+    const setMonoFont = useUIStore(state => state.setMonoFont);
     const diffLayoutPreference = useUIStore(state => state.diffLayoutPreference);
     const setDiffLayoutPreference = useUIStore(state => state.setDiffLayoutPreference);
     const diffViewMode = useUIStore(state => state.diffViewMode);
@@ -183,6 +189,57 @@ export const OpenChamberVisualSettings: React.FC<OpenChamberVisualSettingsProps>
                             ))}
                         </SelectContent>
                     </Select>
+                </div>
+            )}
+
+            {shouldShow('fonts') && !isVSCodeRuntime() && (
+                <div className="space-y-4">
+                    <div className="space-y-1">
+                        <h3 className="typography-ui-header font-semibold text-foreground">
+                            Fonts
+                        </h3>
+                        <p className="typography-meta text-muted-foreground">
+                            Choose fonts for the interface and code blocks.
+                        </p>
+                    </div>
+
+                    <div className="flex flex-col gap-4 sm:flex-row sm:gap-6">
+                        <div className="space-y-2">
+                            <div className="typography-ui-label text-muted-foreground">
+                                Interface Font
+                            </div>
+                            <Select value={uiFont} onValueChange={setUiFont}>
+                                <SelectTrigger className="w-44" style={{ fontFamily: UI_FONT_OPTION_MAP[uiFont].stack }}>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {UI_FONT_OPTIONS.map((font) => (
+                                        <SelectItem key={font.id} value={font.id} style={{ fontFamily: font.stack }}>
+                                            {font.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <div className="typography-ui-label text-muted-foreground">
+                                Code Font
+                            </div>
+                            <Select value={monoFont} onValueChange={setMonoFont}>
+                                <SelectTrigger className="w-44" style={{ fontFamily: CODE_FONT_OPTION_MAP[monoFont].stack }}>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {CODE_FONT_OPTIONS.map((font) => (
+                                        <SelectItem key={font.id} value={font.id} style={{ fontFamily: font.stack }}>
+                                            {font.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
                 </div>
             )}
 
