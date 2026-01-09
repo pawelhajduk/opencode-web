@@ -3,6 +3,8 @@ import { devtools, persist, createJSONStorage } from 'zustand/middleware';
 import type { SidebarSection } from '@/constants/sidebar';
 import { getSafeStorage } from './utils/safeStorage';
 import { SEMANTIC_TYPOGRAPHY, getTypographyVariable, type SemanticTypographyKey } from '@/lib/typography';
+import type { UiFontOption, MonoFontOption } from '@/lib/fontOptions';
+import { DEFAULT_UI_FONT, DEFAULT_MONO_FONT } from '@/lib/fontOptions';
 
 export type MainTab = 'chat' | 'git' | 'diff' | 'terminal' | 'files';
 
@@ -50,6 +52,8 @@ interface UIStore {
   toolCallExpansion: 'collapsed' | 'activity' | 'detailed';
   fontSize: number;
   padding: number;
+  uiFont: UiFontOption;
+  monoFont: MonoFontOption;
   cornerRadius: number;
   inputBarOffset: number;
 
@@ -95,6 +99,8 @@ interface UIStore {
   setMemoryLimitActiveSession: (value: number) => void;
   setToolCallExpansion: (value: 'collapsed' | 'activity' | 'detailed') => void;
   setFontSize: (size: number) => void;
+  setUiFont: (font: UiFontOption) => void;
+  setMonoFont: (font: MonoFontOption) => void;
   setPadding: (size: number) => void;
   setCornerRadius: (radius: number) => void;
   setInputBarOffset: (offset: number) => void;
@@ -153,6 +159,8 @@ export const useUIStore = create<UIStore>()(
         toolCallExpansion: 'collapsed',
         fontSize: 100,
         padding: 100,
+        uiFont: DEFAULT_UI_FONT,
+        monoFont: DEFAULT_MONO_FONT,
         cornerRadius: 12,
         inputBarOffset: 0,
         favoriteModels: [],
@@ -329,6 +337,13 @@ export const useUIStore = create<UIStore>()(
           const clampedSize = Math.max(50, Math.min(200, size));
           set({ fontSize: clampedSize });
           get().applyTypography();
+        },
+
+        setUiFont: (font) => {
+          set({ uiFont: font });
+        },
+        setMonoFont: (font) => {
+          set({ monoFont: font });
         },
 
         setPadding: (size) => {
@@ -557,6 +572,8 @@ export const useUIStore = create<UIStore>()(
           toolCallExpansion: state.toolCallExpansion,
           fontSize: state.fontSize,
           padding: state.padding,
+          uiFont: state.uiFont,
+          monoFont: state.monoFont,
           cornerRadius: state.cornerRadius,
           favoriteModels: state.favoriteModels,
           recentModels: state.recentModels,
