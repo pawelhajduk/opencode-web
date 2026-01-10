@@ -1520,3 +1520,7 @@ html:not(.dark) .chat-scroll {
   content-visibility: visible !important;
   contain-intrinsic-size: none !important;
 }
+/* Hide system caret in terminal - targets both Ghostty internal input and our custom touch input */
+.terminal-viewport-container textarea {
+  caret-color: transparent !important;
+}
