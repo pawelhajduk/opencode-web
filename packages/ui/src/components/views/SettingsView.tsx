@@ -349,9 +349,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose, forceMobile
         {/* Mobile: spacer to push tabs to the right */}
         {isMobile && <div className="flex-1" />}
 
-        <div className={cn('flex items-center', isMobile ? 'gap-1' : 'h-full')}>
+        <div className={cn('flex items-center', isMobile ? 'gap-1 flex-shrink-0' : 'h-full flex-1 min-w-0')}>
           {/* Leading divider before first tab - only on Mac desktop */}
-          {!isMobile && showLeadingDivider && <div className="h-full w-px bg-border" aria-hidden="true" />}
+          {!isMobile && showLeadingDivider && <div className="h-full w-px bg-border flex-shrink-0" aria-hidden="true" />}
           {SETTINGS_SECTIONS.map(({ id, label, icon: Icon }) => {
             const isActive = activeTab === id;
             const PhosphorIcon = Icon as React.ComponentType<{ className?: string; weight?: string }>;
@@ -407,7 +407,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose, forceMobile
         </div>
 
         {(onClose || showProjectSwitcher) && (
-          <div className={cn('flex items-center gap-2', isMobile ? '' : 'pr-3')}>
+          <div className={cn('flex items-center gap-2 flex-shrink-0', isMobile ? '' : 'pr-3')}>
             {showProjectSwitcher && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
