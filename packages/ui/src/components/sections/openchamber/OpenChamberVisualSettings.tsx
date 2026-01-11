@@ -174,32 +174,6 @@ export const OpenChamberVisualSettings: React.FC<OpenChamberVisualSettingsProps>
                         </p>
                     </div>
 
-                    <div className="flex gap-1 w-fit">
-                        {COLOR_SCHEME_OPTIONS.map((scheme) => (
-                            <ButtonSmall
-                                key={scheme.id}
-                                variant={currentColorScheme === scheme.id ? 'default' : 'outline'}
-                                className={cn(currentColorScheme === scheme.id ? undefined : 'text-foreground')}
-                                onClick={() => handleColorSchemeChange(scheme.id)}
-                            >
-                                {scheme.label}
-                            </ButtonSmall>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {shouldShow('colorScheme') && !isVSCodeRuntime() && (
-                <div className="space-y-4">
-                    <div className="space-y-1">
-                        <h3 className="typography-ui-header font-semibold text-foreground">
-                            Color Scheme
-                        </h3>
-                        <p className="typography-meta text-muted-foreground">
-                            Select the color palette for the app and diff editor.
-                        </p>
-                    </div>
-
                     <Select value={currentColorScheme} onValueChange={handleColorSchemeChange}>
                         <SelectTrigger className="w-40">
                             <SelectValue />
@@ -212,57 +186,6 @@ export const OpenChamberVisualSettings: React.FC<OpenChamberVisualSettingsProps>
                             ))}
                         </SelectContent>
                     </Select>
-                </div>
-            )}
-
-            {shouldShow('fonts') && !isVSCodeRuntime() && (
-                <div className="space-y-4">
-                    <div className="space-y-1">
-                        <h3 className="typography-ui-header font-semibold text-foreground">
-                            Fonts
-                        </h3>
-                        <p className="typography-meta text-muted-foreground">
-                            Choose fonts for the interface and code blocks.
-                        </p>
-                    </div>
-
-                    <div className="flex flex-col gap-4 sm:flex-row sm:gap-6">
-                        <div className="space-y-2">
-                            <div className="typography-ui-label text-muted-foreground">
-                                Interface Font
-                            </div>
-                            <Select value={uiFont} onValueChange={setUiFont}>
-                                <SelectTrigger className="w-44" style={{ fontFamily: UI_FONT_OPTION_MAP[uiFont].stack }}>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {UI_FONT_OPTIONS.map((font) => (
-                                        <SelectItem key={font.id} value={font.id} style={{ fontFamily: font.stack }}>
-                                            {font.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div className="space-y-2">
-                            <div className="typography-ui-label text-muted-foreground">
-                                Code Font
-                            </div>
-                            <Select value={monoFont} onValueChange={setMonoFont}>
-                                <SelectTrigger className="w-44" style={{ fontFamily: CODE_FONT_OPTION_MAP[monoFont].stack }}>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {CODE_FONT_OPTIONS.map((font) => (
-                                        <SelectItem key={font.id} value={font.id} style={{ fontFamily: font.stack }}>
-                                            {font.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
                 </div>
             )}
 
