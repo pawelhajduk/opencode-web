@@ -57,6 +57,7 @@ interface UIStore {
   diffFileLayout: Record<string, 'inline' | 'side-by-side'>;
   diffWrapLines: boolean;
   isTimelineDialogOpen: boolean;
+  nativeNotificationsEnabled: boolean;
 
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
   toggleSidebar: () => void;
@@ -101,6 +102,7 @@ interface UIStore {
   setDiffWrapLines: (wrap: boolean) => void;
   setMultiRunLauncherOpen: (open: boolean) => void;
   setTimelineDialogOpen: (open: boolean) => void;
+  setNativeNotificationsEnabled: (value: boolean) => void;
   openMultiRunLauncher: () => void;
   openMultiRunLauncherWithPrompt: (prompt: string) => void;
 }
@@ -146,6 +148,7 @@ export const useUIStore = create<UIStore>()(
         diffFileLayout: {},
         diffWrapLines: false,
         isTimelineDialogOpen: false,
+        nativeNotificationsEnabled: false,
 
         setTheme: (theme) => {
           set({ theme });
@@ -480,6 +483,10 @@ export const useUIStore = create<UIStore>()(
         setTimelineDialogOpen: (open) => {
           set({ isTimelineDialogOpen: open });
         },
+
+        setNativeNotificationsEnabled: (value) => {
+          set({ nativeNotificationsEnabled: value });
+        },
       }),
       {
         name: 'ui-store',
@@ -506,6 +513,7 @@ export const useUIStore = create<UIStore>()(
           recentModels: state.recentModels,
           diffLayoutPreference: state.diffLayoutPreference,
           diffWrapLines: state.diffWrapLines,
+          nativeNotificationsEnabled: state.nativeNotificationsEnabled,
         })
       }
     ),
