@@ -291,7 +291,6 @@ export const PierreDiffViewer: React.FC<PierreDiffViewerProps> = ({
       console.error("Failed to send comment", e);
     }
   }, [selection, commentText, original, modified, fileName, language, sendMessage, currentSessionId, currentProviderId, currentModelId, currentAgentName, currentVariant, setActiveMainTab, getSessionAgentSelection, getAgentModelForSession, getAgentModelVariantForSession]);
-  const currentThemeId = themeSystem?.currentTheme?.metadata?.id;
 
   ensureDiffThemesRegistered();
 
