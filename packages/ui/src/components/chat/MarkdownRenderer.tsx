@@ -49,19 +49,29 @@ const getMarkdownShikiThemes = (): readonly [string | object, string | object] =
   }
 
   const provided = window.__OPENCHAMBER_VSCODE_SHIKI_THEMES__;
-  if (provided?.light && provided?.dark) {
-    const light = withStableStringId(
-      { ...(provided.light as Record<string, unknown>) },
-      `vscode-shiki-light:${String((provided.light as { name?: unknown })?.name ?? 'theme')}`,
-    );
-    const dark = withStableStringId(
-      { ...(provided.dark as Record<string, unknown>) },
-      `vscode-shiki-dark:${String((provided.dark as { name?: unknown })?.name ?? 'theme')}`,
-    );
-    return [light, dark] as const;
+  if (!provided) {
+    return streamdownThemes;
   }
 
-  return streamdownThemes;
+  const hasLight = provided.light && typeof provided.light === 'object';
+  const hasDark = provided.dark && typeof provided.dark === 'object';
+
+  if (!hasLight && !hasDark) {
+    return streamdownThemes;
+  }
+
+  const effectiveLight = provided.light ?? provided.dark;
+  const effectiveDark = provided.dark ?? provided.light;
+
+  const light = withStableStringId(
+    { ...(effectiveLight as Record<string, unknown>) },
+    `vscode-shiki-light:${String((effectiveLight as { name?: unknown })?.name ?? 'theme')}`,
+  );
+  const dark = withStableStringId(
+    { ...(effectiveDark as Record<string, unknown>) },
+    `vscode-shiki-dark:${String((effectiveDark as { name?: unknown })?.name ?? 'theme')}`,
+  );
+  return [light, dark] as const;
 };
 
 const useMarkdownShikiThemes = (): readonly [string | object, string | object] => {
