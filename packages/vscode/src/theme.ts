@@ -13,3 +13,11 @@ export function getThemeKindName(kind: vscode.ColorThemeKind): ThemeKindName {
       return 'dark';
   }
 }
+
+export function getActiveThemeLabel(): string | undefined {
+  return vscode.workspace.getConfiguration('workbench').get<string>('colorTheme') || undefined;
+}
+
+export function isHighContrastTheme(kind: vscode.ColorThemeKind): boolean {
+  return kind === vscode.ColorThemeKind.HighContrast || kind === vscode.ColorThemeKind.HighContrastLight;
+}

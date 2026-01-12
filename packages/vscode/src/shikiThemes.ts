@@ -11,6 +11,54 @@ export type WebviewShikiThemePayload = {
   dark?: Record<string, unknown>;
 };
 
+let outputChannel: vscode.OutputChannel | null = null;
+
+const getOutputChannel = (): vscode.OutputChannel => {
+  if (!outputChannel) {
+    outputChannel = vscode.window.createOutputChannel('OpenChamber Shiki Themes');
+  }
+  return outputChannel;
+};
+
+const log = (message: string): void => {
+  getOutputChannel().appendLine(`[${new Date().toISOString()}] ${message}`);
+};
+
+type ThemeCache = {
+  label: string;
+  json: Record<string, unknown>;
+  timestamp: number;
+};
+
+const themeCache = new Map<string, ThemeCache>();
+const CACHE_TTL_MS = 5 * 60 * 1000;
+
+const getCachedTheme = (label: string): Record<string, unknown> | null => {
+  const cached = themeCache.get(label.toLowerCase());
+  if (!cached) return null;
+  
+  const now = Date.now();
+  if (now - cached.timestamp > CACHE_TTL_MS) {
+    themeCache.delete(label.toLowerCase());
+    return null;
+  }
+  
+  return cached.json;
+};
+
+const setCachedTheme = (label: string, json: Record<string, unknown>): void => {
+  themeCache.set(label.toLowerCase(), {
+    label,
+    json,
+    timestamp: Date.now(),
+  });
+};
+
+export const clearThemeCache = (): void => {
+  themeCache.clear();
+  log('Theme cache cleared');
+};
+
 const stripJsonc = (input: string): string => {
   let output = '';
   let inString = false;
@@ -178,15 +226,36 @@ const findContributedTheme = (label: string): { extension: vscode.Extension<unkn
 };
 
 const readThemeJsonByLabel = async (label: string): Promise<Record<string, unknown> | null> => {
+  const cached = getCachedTheme(label);
+  if (cached) {
+    log(`Using cached theme for "${label}"`);
+    return cached;
+  }
+
   const resolved = findContributedTheme(label);
-  if (!resolved) return null;
+  if (!resolved) {
+    log(`Theme not found in extensions: "${label}"`);
+    return null;
+  }
 
   try {
     const uri = vscode.Uri.joinPath(resolved.extension.extensionUri, resolved.theme.path as string);
+    log(`Reading theme file: ${uri.fsPath}`);
     const bytes = await vscode.workspace.fs.readFile(uri);
     const text = new TextDecoder('utf-8').decode(bytes);
-    return parseJsoncLoose(text);
-  } catch {
+    const json = parseJsoncLoose(text);
+    
+    if (json) {
+      setCachedTheme(label, json);
+      log(`Successfully loaded and cached theme: "${label}"`);
+    } else {
+      log(`Failed to parse theme JSON for: "${label}"`);
+    }
+    
+    return json;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    log(`Error reading theme "${label}": ${message}`);
     return null;
   }
 };
@@ -207,26 +276,30 @@ export async function getWebviewShikiThemes(): Promise<WebviewShikiThemePayload 
       ? 'light'
       : 'dark';
 
-  // Use the actively selected theme for the current variant, and only fall back to preferred
-  // themes for the opposite variant (so we actually pick up user-selected theme changes).
   const lightLabel = themeVariant === 'light' ? current : preferredLight;
   const darkLabel = themeVariant === 'dark' ? current : preferredDark;
+
+  log(`Resolving Shiki themes - current: "${current}", variant: ${themeVariant}`);
+  log(`Light label: "${lightLabel}", Dark label: "${darkLabel}"`);
 
   const [lightRaw, darkRaw] = await Promise.all([
     lightLabel ? readThemeJsonByLabel(lightLabel) : Promise.resolve(null),
     darkLabel ? readThemeJsonByLabel(darkLabel) : Promise.resolve(null),
   ]);
 
-  // If we only managed to resolve one side, use it for both. This still gives correct highlighting
-  // for the currently active VS Code theme, and avoids falling back to Flexoki.
   const fallbackOneSide = lightRaw ?? darkRaw;
   const effectiveLight = lightRaw ?? fallbackOneSide;
   const effectiveDark = darkRaw ?? fallbackOneSide;
 
-  return !effectiveLight && !effectiveDark
-    ? null
-    : {
-        light: effectiveLight ? ensureUniqueThemeName(effectiveLight, 'Light') : undefined,
-        dark: effectiveDark ? ensureUniqueThemeName(effectiveDark, 'Dark') : undefined,
-      };
+  if (!effectiveLight && !effectiveDark) {
+    log('No VS Code theme JSON resolved - webview will use built-in fallback themes');
+    return null;
+  }
+
+  log(`Resolved themes - light: ${effectiveLight ? 'yes' : 'no'}, dark: ${effectiveDark ? 'yes' : 'no'}`);
+
+  return {
+    light: effectiveLight ? ensureUniqueThemeName(effectiveLight, 'Light') : undefined,
+    dark: effectiveDark ? ensureUniqueThemeName(effectiveDark, 'Dark') : undefined,
+  };
 }
