@@ -72,6 +72,25 @@ function App({ apis }: AppProps) {
       return;
     }
     const root = document.documentElement;
+
+    if (isVSCodeRuntime) {
+      const vscodeUiFont = "var(--vscode-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif)";
+      const fallbackMonoStack = CODE_FONT_OPTION_MAP[monoFont]?.stack ?? CODE_FONT_OPTION_MAP[DEFAULT_MONO_FONT].stack;
+      const vscodeMonoFont = `var(--vscode-editor-font-family), ${fallbackMonoStack}`;
+
+      root.style.setProperty('--font-sans', vscodeUiFont);
+      root.style.setProperty('--font-heading', vscodeUiFont);
+      root.style.setProperty('--font-family-sans', vscodeUiFont);
+      root.style.setProperty('--font-mono', vscodeMonoFont);
+      root.style.setProperty('--font-family-mono', vscodeMonoFont);
+      root.style.setProperty('--ui-regular-font-weight', '400');
+
+      if (document.body) {
+        document.body.style.fontFamily = vscodeUiFont;
+      }
+      return;
+    }
+
     const uiStack = UI_FONT_OPTION_MAP[uiFont]?.stack ?? UI_FONT_OPTION_MAP[DEFAULT_UI_FONT].stack;
     const monoStack = CODE_FONT_OPTION_MAP[monoFont]?.stack ?? CODE_FONT_OPTION_MAP[DEFAULT_MONO_FONT].stack;
 
@@ -85,7 +104,7 @@ function App({ apis }: AppProps) {
     if (document.body) {
       document.body.style.fontFamily = uiStack;
     }
-  }, [uiFont, monoFont]);
+  }, [uiFont, monoFont, isVSCodeRuntime]);
 
   React.useEffect(() => {
     if (isInitialized) {

@@ -29,6 +29,16 @@
   --text-micro: 0.875rem;
 }
 
+/* VS Code runtime: derive typography from VS Code's native font size variables */
+:root.vscode-runtime {
+  --text-markdown: var(--vscode-font-size, 0.9063rem);
+  --text-ui-header: var(--vscode-font-size, 0.9063rem);
+  --text-ui-label: calc(var(--vscode-font-size, 13px) * 0.923);
+  --text-meta: calc(var(--vscode-font-size, 13px) * 0.923);
+  --text-micro: calc(var(--vscode-font-size, 13px) * 0.846);
+  --text-code: var(--vscode-editor-font-size, 0.8750rem);
+}
+
 @custom-variant dark (&:is(.dark *));
 
 /* Suppress WebKit-specific hover/focus adornments on the chat textarea */
