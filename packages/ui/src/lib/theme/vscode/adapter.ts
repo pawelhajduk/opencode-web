@@ -94,9 +94,18 @@ export type VSCodeThemeColorToken =
   | 'scrollbarSlider.background'
   | 'scrollbarSlider.hoverBackground';
 
+export type VSCodeFontToken =
+  | 'font.family'
+  | 'font.size'
+  | 'editor.fontFamily'
+  | 'editor.fontSize'
+  | 'editor.fontWeight'
+  | 'editor.lineHeight';
+
 export type VSCodeThemePalette = {
   kind: VSCodeThemeKind;
   colors: Partial<Record<VSCodeThemeColorToken, string>>;
+  fonts?: Partial<Record<VSCodeFontToken, string>>;
   mode?: ThemeMode;
 };
 
@@ -196,7 +205,23 @@ const VARIABLE_MAP: Record<VSCodeThemeColorToken, string> = {
   'scrollbarSlider.hoverBackground': '--vscode-scrollbarSlider-hoverBackground',
 };
 
+const FONT_VARIABLE_MAP: Record<VSCodeFontToken, string> = {
+  'font.family': '--vscode-font-family',
+  'font.size': '--vscode-font-size',
+  'editor.fontFamily': '--vscode-editor-font-family',
+  'editor.fontSize': '--vscode-editor-font-size',
+  'editor.fontWeight': '--vscode-editor-font-weight',
+  'editor.lineHeight': '--vscode-editor-lineHeight',
+};
+
 const normalizeColor = (value?: string | null): string | undefined => {
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  return trimmed;
+};
+
+const normalizeFontValue = (value?: string | null): string | undefined => {
   if (!value) return undefined;
   const trimmed = value.trim();
   if (!trimmed) return undefined;
@@ -273,9 +298,21 @@ export const readVSCodeThemePalette = (
     }
   });
 
+  const fonts: Partial<Record<VSCodeFontToken, string>> = {};
+
+  (Object.keys(FONT_VARIABLE_MAP) as VSCodeFontToken[]).forEach((token) => {
+    const cssVar = FONT_VARIABLE_MAP[token];
+    const value = normalizeFontValue(rootStyles.getPropertyValue(cssVar))
+      ?? (bodyStyles ? normalizeFontValue(bodyStyles.getPropertyValue(cssVar)) : undefined);
+    if (value) {
+      fonts[token] = value;
+    }
+  });
+
   return {
     kind: readKind(preferredKind),
     colors,
+    fonts: Object.keys(fonts).length > 0 ? fonts : undefined,
     mode: preferredMode,
   };
 };
@@ -286,6 +323,9 @@ export const buildVSCodeThemeFromPalette = (palette: VSCodeThemePalette): Theme 
   
   const read = (token: VSCodeThemeColorToken, fallback: string): string =>
     palette.colors[token] ?? fallback;
+
+  const readFont = (token: VSCodeFontToken): string | undefined =>
+    palette.fonts?.[token];
 
   // ===========================================
   // SURFACE COLORS - Layered backgrounds
@@ -542,6 +582,14 @@ export const buildVSCodeThemeFromPalette = (palette: VSCodeThemePalette): Theme 
         track: 'transparent',
         thumb: read('scrollbarSlider.background', applyAlpha(foreground, isDark ? 0.2 : 0.15)),
         thumbHover: read('scrollbarSlider.hoverBackground', applyAlpha(foreground, isDark ? 0.35 : 0.25)),
+      },
+    },
+    config: {
+      ...base.config,
+      fonts: {
+        sans: readFont('font.family') ?? base.config?.fonts?.sans,
+        mono: readFont('editor.fontFamily') ?? base.config?.fonts?.mono,
+        heading: readFont('font.family') ?? base.config?.fonts?.heading,
       },
     },
   };

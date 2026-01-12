@@ -526,23 +526,26 @@ export class CSSVariableGenerator {
 
   private generateTypographyVariables(): string[] {
     const vars: string[] = [];
-    const typography = isVSCodeRuntime() ? VSCODE_TYPOGRAPHY : SEMANTIC_TYPOGRAPHY;
+    const isVSCode = isVSCodeRuntime();
 
     vars.push('  /* Semantic Typography Variables */');
     vars.push('  --ui-regular-font-weight: 400;');
 
-    vars.push('  /* Markdown content - all markdown elements use same size */');
-    vars.push(`  --text-markdown: ${typography.markdown};`);
-    vars.push('  /* Code content - all code elements use same size */');
-    vars.push(`  --text-code: ${typography.code};`);
-    vars.push('  /* UI headers - dialog titles, panel headers */');
-    vars.push(`  --text-ui-header: ${typography.uiHeader};`);
-    vars.push('  /* UI labels - buttons, menus, navigation */');
-    vars.push(`  --text-ui-label: ${typography.uiLabel};`);
-    vars.push('  /* Metadata - timestamps, status, helper text */');
-    vars.push(`  --text-meta: ${typography.meta};`);
-    vars.push('  /* Micro text - badges, shortcuts, indicators */');
-    vars.push(`  --text-micro: ${typography.micro};`);
+    if (isVSCode) {
+      vars.push(`  --text-markdown: var(--vscode-font-size, ${VSCODE_TYPOGRAPHY.markdown});`);
+      vars.push(`  --text-code: var(--vscode-editor-font-size, ${VSCODE_TYPOGRAPHY.code});`);
+      vars.push(`  --text-ui-header: var(--vscode-font-size, ${VSCODE_TYPOGRAPHY.uiHeader});`);
+      vars.push(`  --text-ui-label: calc(var(--vscode-font-size, 13px) * 0.923);`);
+      vars.push(`  --text-meta: calc(var(--vscode-font-size, 13px) * 0.923);`);
+      vars.push(`  --text-micro: calc(var(--vscode-font-size, 13px) * 0.846);`);
+    } else {
+      vars.push(`  --text-markdown: ${SEMANTIC_TYPOGRAPHY.markdown};`);
+      vars.push(`  --text-code: ${SEMANTIC_TYPOGRAPHY.code};`);
+      vars.push(`  --text-ui-header: ${SEMANTIC_TYPOGRAPHY.uiHeader};`);
+      vars.push(`  --text-ui-label: ${SEMANTIC_TYPOGRAPHY.uiLabel};`);
+      vars.push(`  --text-meta: ${SEMANTIC_TYPOGRAPHY.meta};`);
+      vars.push(`  --text-micro: ${SEMANTIC_TYPOGRAPHY.micro};`);
+    }
 
      vars.push('  /* Heading line height and letter spacing */');
      vars.push('  --h1-line-height: 1.25rem;');
