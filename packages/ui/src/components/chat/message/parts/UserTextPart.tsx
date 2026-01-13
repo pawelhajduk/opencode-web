@@ -41,10 +41,17 @@ const UserTextPart: React.FC<UserTextPartProps> = ({ part, messageId, agentMenti
         resizeObserver.observe(el);
 
         return () => resizeObserver.disconnect();
-    }, [textContent, isExpanded]);
+    }, [isExpanded]);
 
     const handleClick = React.useCallback(() => {
         if (isTruncated || isExpanded) {
+            setIsExpanded((prev) => !prev);
+        }
+    }, [isTruncated, isExpanded]);
+
+    const handleKeyDown = React.useCallback((e: React.KeyboardEvent) => {
+        if ((e.key === 'Enter' || e.key === ' ') && (isTruncated || isExpanded)) {
+            e.preventDefault();
             setIsExpanded((prev) => !prev);
         }
     }, [isTruncated, isExpanded]);
@@ -56,14 +63,37 @@ const UserTextPart: React.FC<UserTextPartProps> = ({ part, messageId, agentMenti
     // Render content with optional agent mention link
     const renderContent = () => {
         if (!agentMention?.token || !textContent.includes(agentMention.token)) {
-            return textContent;
+            const codeSegments = parseInlineCode(textContent);
+            return codeSegments.map((segment, idx) => {
+                const key = typeof segment === 'string' 
+                    ? `seg-${idx}-${segment.slice(0, 20)}` 
+                    : `seg-${idx}`;
+                return (
+                    <React.Fragment key={key}>
+                        {parseFilePaths(segment)}
+                    </React.Fragment>
+                );
+            });
         }
         const idx = textContent.indexOf(agentMention.token);
         const before = textContent.slice(0, idx);
         const after = textContent.slice(idx + agentMention.token.length);
+        
+        const beforeSegments = parseInlineCode(before);
+        const afterSegments = parseInlineCode(after);
+        
         return (
             <>
-                {before}
+                {beforeSegments.map((segment, idx) => {
+                    const key = typeof segment === 'string'
+                        ? `before-${idx}-${segment.slice(0, 20)}`
+                        : `before-${idx}`;
+                    return (
+                        <React.Fragment key={key}>
+                            {parseFilePaths(segment)}
+                        </React.Fragment>
+                    );
+                })}
                 <a
                     href={buildMentionUrl(agentMention.name)}
                     className="text-primary hover:underline"
@@ -73,20 +103,37 @@ const UserTextPart: React.FC<UserTextPartProps> = ({ part, messageId, agentMenti
                 >
                     {agentMention.token}
                 </a>
-                {after}
+                {afterSegments.map((segment, idx) => {
+                    const key = typeof segment === 'string'
+                        ? `after-${idx}-${segment.slice(0, 20)}`
+                        : `after-${idx}`;
+                    return (
+                        <React.Fragment key={key}>
+                            {parseFilePaths(segment)}
+                        </React.Fragment>
+                    );
+                })}
             </>
         );
     };
+
+    const isInteractive = isTruncated || isExpanded;
 
     return (
         <div
             className={cn(
                 "break-words whitespace-pre-wrap font-sans typography-markdown",
                 !isExpanded && "line-clamp-3",
-                (isTruncated || isExpanded) && "cursor-pointer"
+                isInteractive && "cursor-pointer"
             )}
             ref={textRef}
-            onClick={handleClick}
+            {...(isInteractive && {
+                onClick: handleClick,
+                onKeyDown: handleKeyDown,
+                role: "button",
+                tabIndex: 0,
+                "aria-label": isExpanded ? "Collapse text" : "Expand text"
+            })}
             key={part.id || `${messageId}-user-text`}
         >
             {renderContent()}
