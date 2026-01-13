@@ -243,7 +243,7 @@ const UserMessageBody: React.FC<{
             <MessageFilesDisplay files={parts} onShowPopup={onShowPopup} />
             {(canCopyMessage && hasCopyableText) || onRevert || onFork ? (
                 <div className={cn(
-                    "mt-1 flex items-center justify-end gap-2 opacity-0 pointer-events-none transition-opacity duration-150 group-hover/message:opacity-100 group-hover/message:pointer-events-auto focus-within:opacity-100 focus-within:pointer-events-auto",
+                    "absolute top-2 right-2 flex items-center gap-0.5 opacity-0 pointer-events-none transition-opacity duration-150 group-hover/message:opacity-100 group-hover/message:pointer-events-auto focus-within:opacity-100 focus-within:pointer-events-auto bg-muted/40 dark:bg-muted/30 border border-border/30 rounded-lg px-1 py-1",
                     copyHintVisible && "opacity-100 pointer-events-auto"
                 )}>
                     {onRevert && (
@@ -253,7 +253,7 @@ const UserMessageBody: React.FC<{
                                     type="button"
                                     variant="ghost"
                                     size="icon"
-                                    className="h-8 w-8 text-muted-foreground bg-transparent hover:text-foreground hover:!bg-transparent active:!bg-transparent focus-visible:!bg-transparent focus-visible:ring-2 focus-visible:ring-primary/50"
+                                    className="h-7 w-7 text-muted-foreground bg-transparent hover:text-foreground hover:!bg-transparent active:!bg-transparent focus-visible:!bg-transparent focus-visible:ring-2 focus-visible:ring-primary/50"
                                     aria-label="Revert to this message"
                                     onPointerDown={(event) => event.stopPropagation()}
                                     onClick={(event) => {
@@ -274,7 +274,7 @@ const UserMessageBody: React.FC<{
                                     type="button"
                                     variant="ghost"
                                     size="icon"
-                                    className="h-8 w-8 text-muted-foreground bg-transparent hover:text-foreground hover:!bg-transparent active:!bg-transparent focus-visible:!bg-transparent focus-visible:ring-2 focus-visible:ring-primary/50"
+                                    className="h-7 w-7 text-muted-foreground bg-transparent hover:text-foreground hover:!bg-transparent active:!bg-transparent focus-visible:!bg-transparent focus-visible:ring-2 focus-visible:ring-primary/50"
                                     onPointerDown={(event) => event.stopPropagation()}
                                     onClick={(event) => {
                                         event.stopPropagation();
@@ -295,7 +295,7 @@ const UserMessageBody: React.FC<{
                                     variant="ghost"
                                     size="icon"
                                     data-visible={copyHintVisible || isMessageCopied ? 'true' : undefined}
-                                    className="h-8 w-8 text-muted-foreground bg-transparent hover:text-foreground hover:!bg-transparent active:!bg-transparent focus-visible:!bg-transparent focus-visible:ring-2 focus-visible:ring-primary/50"
+                                    className="h-7 w-7 text-muted-foreground bg-transparent hover:text-foreground hover:!bg-transparent active:!bg-transparent focus-visible:!bg-transparent focus-visible:ring-2 focus-visible:ring-primary/50"
                                     aria-label="Copy message text"
                                     onPointerDown={(event) => event.stopPropagation()}
                                     onClick={handleCopyButtonClick}
@@ -1107,11 +1107,11 @@ const AssistantMessageBody: React.FC<Omit<MessageBodyProps, 'isUser'>> = ({
                           type="button"
                           size="icon"
                           variant="ghost"
-                          className="h-8 w-8 text-muted-foreground bg-transparent hover:text-foreground hover:!bg-transparent active:!bg-transparent focus-visible:!bg-transparent focus-visible:ring-2 focus-visible:ring-primary/50"
+                          className="h-7 w-7 text-muted-foreground bg-transparent hover:text-foreground hover:!bg-transparent active:!bg-transparent focus-visible:!bg-transparent focus-visible:ring-2 focus-visible:ring-primary/50"
                           onPointerDown={(event) => event.stopPropagation()}
                           onClick={handleForkClick}
                       >
-                          <RiChatNewLine className="h-4 w-4" />
+                          <RiChatNewLine className="h-3.5 w-3.5" />
                       </Button>
                   </TooltipTrigger>
                   <TooltipContent sideOffset={6}>Start new session from this answer</TooltipContent>
@@ -1122,11 +1122,11 @@ const AssistantMessageBody: React.FC<Omit<MessageBodyProps, 'isUser'>> = ({
                           type="button"
                           size="icon"
                           variant="ghost"
-                          className="h-8 w-8 text-muted-foreground bg-transparent hover:text-foreground hover:!bg-transparent active:!bg-transparent focus-visible:!bg-transparent focus-visible:ring-2 focus-visible:ring-primary/50"
+                          className="h-7 w-7 text-muted-foreground bg-transparent hover:text-foreground hover:!bg-transparent active:!bg-transparent focus-visible:!bg-transparent focus-visible:ring-2 focus-visible:ring-primary/50"
                           onPointerDown={(event) => event.stopPropagation()}
                           onClick={handleForkMultiRunClick}
                       >
-                          <ArrowsMerge className="h-4 w-4" />
+                          <ArrowsMerge className="h-3.5 w-3.5" />
                       </Button>
                   </TooltipTrigger>
                   <TooltipContent sideOffset={6}>Start new multi-run from this answer</TooltipContent>
@@ -1141,7 +1141,7 @@ const AssistantMessageBody: React.FC<Omit<MessageBodyProps, 'isUser'>> = ({
                              size="icon"
                              data-visible={copyHintVisible || isMessageCopied ? 'true' : undefined}
                              className={cn(
-                                 'h-8 w-8 text-muted-foreground bg-transparent hover:text-foreground hover:!bg-transparent active:!bg-transparent focus-visible:!bg-transparent focus-visible:ring-2 focus-visible:ring-primary/50',
+                                 'h-7 w-7 text-muted-foreground bg-transparent hover:text-foreground hover:!bg-transparent active:!bg-transparent focus-visible:!bg-transparent focus-visible:ring-2 focus-visible:ring-primary/50',
                                  !hasCopyableText && 'opacity-50'
                              )}
                              disabled={!hasCopyableText}
@@ -1206,11 +1206,11 @@ const AssistantMessageBody: React.FC<Omit<MessageBodyProps, 'isUser'>> = ({
                                 onMouseEnter={() => setIsSummaryHovered(true)}
                                 onMouseLeave={() => setIsSummaryHovered(false)}
                             >
-                                <SimpleMarkdownRenderer content={summaryBody} />
+                                 <SimpleMarkdownRenderer content={summaryBody} />
                                 {shouldShowFooter && (
                                     <div
                                         className={cn(
-                                            "mt-2 mb-1 flex items-center justify-end gap-2 opacity-0 pointer-events-none transition-opacity duration-150 focus-within:opacity-100 focus-within:pointer-events-auto",
+                                            "absolute top-2 right-2 flex items-center gap-0.5 opacity-0 pointer-events-none transition-opacity duration-150 focus-within:opacity-100 focus-within:pointer-events-auto bg-muted/40 dark:bg-muted/30 border border-border/30 rounded-lg px-1 py-1",
                                             isSummaryHovered && "opacity-100 pointer-events-auto",
                                         )}
                                     >
@@ -1223,7 +1223,7 @@ const AssistantMessageBody: React.FC<Omit<MessageBodyProps, 'isUser'>> = ({
                 </div>
                 <MessageFilesDisplay files={parts} onShowPopup={onShowPopup} />
                 {!showSummaryBody && shouldShowFooter && (
-                    <div className="mt-2 mb-1 flex items-center justify-end gap-2 opacity-0 pointer-events-none transition-opacity duration-150 group-hover/message:opacity-100 group-hover/message:pointer-events-auto focus-within:opacity-100 focus-within:pointer-events-auto">
+                    <div className="absolute top-2 right-2 flex items-center gap-0.5 opacity-0 pointer-events-none transition-opacity duration-150 group-hover/message:opacity-100 group-hover/message:pointer-events-auto focus-within:opacity-100 focus-within:pointer-events-auto bg-muted/40 dark:bg-muted/30 border border-border/30 rounded-lg px-1 py-1">
                         {footerButtons}
                     </div>
                 )}
