@@ -1128,7 +1128,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onOpenSettings, scrollToBo
                 iconButtonBaseClass,
                 buttonSizeClass,
                 canSend && (currentSessionId || newSessionDraftOpen)
-                    ? 'text-primary hover:text-primary'
+                    ? 'text-foreground hover:text-foreground/80'
                     : 'opacity-30'
             )}
             aria-label="Send message"

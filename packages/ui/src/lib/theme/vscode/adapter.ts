@@ -80,6 +80,7 @@ export type VSCodeThemeColorToken =
   // Preformatted text (code)
   | 'textPreformat.foreground'
   | 'textPreformat.background'
+  | 'icon.foreground'
   // Editor widgets
   | 'editorWidget.background'
   | 'editorWidget.foreground'
@@ -203,6 +204,7 @@ const VARIABLE_MAP: Record<VSCodeThemeColorToken, string> = {
   // Scrollbar
   'scrollbarSlider.background': '--vscode-scrollbarSlider-background',
   'scrollbarSlider.hoverBackground': '--vscode-scrollbarSlider-hoverBackground',
+  'icon.foreground': '--vscode-icon-foreground',
 };
 
 const FONT_VARIABLE_MAP: Record<VSCodeFontToken, string> = {
