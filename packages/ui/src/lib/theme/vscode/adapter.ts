@@ -50,7 +50,8 @@ export type VSCodeThemeColorToken =
   | 'list.hoverBackground'
   | 'list.activeSelectionBackground'
   | 'textPreformat.foreground'
-  | 'textPreformat.background';
+  | 'textPreformat.background'
+  | 'icon.foreground';
 
 export type VSCodeFontToken =
   | 'font.family'
@@ -119,6 +120,7 @@ const VARIABLE_MAP: Record<VSCodeThemeColorToken, string> = {
   'list.activeSelectionBackground': '--vscode-list-activeSelectionBackground',
   'textPreformat.foreground': '--vscode-textPreformat-foreground',
   'textPreformat.background': '--vscode-textPreformat-background',
+  'icon.foreground': '--vscode-icon-foreground',
 };
 
 const FONT_VARIABLE_MAP: Record<VSCodeFontToken, string> = {
@@ -252,15 +254,11 @@ export const buildVSCodeThemeFromPalette = (palette: VSCodeThemePalette): Theme 
   // This makes inactive tabs and secondary text clearly distinguishable from active/primary text
   const rawMutedFg = read('descriptionForeground', base.colors.surface.mutedForeground);
   const mutedFg = applyAlpha(rawMutedFg, palette.kind === 'light' ? 0.55 : 0.5);
-  // Prefer VS Code's "added diff" color as our primary accent when available (users expect this to match their theme).
-  const diffInserted = palette.colors['diffEditor.insertedTextBorder']
-    ?? palette.colors['diffEditor.insertedLineBackground']
-    ?? palette.colors['diffEditor.insertedTextBackground']
-    ?? palette.colors['gitDecoration.addedResourceForeground'];
-  const accent = diffInserted
-    ? forceOpaque(diffInserted)
-    : read('button.background', read('textLink.foreground', base.colors.primary.base));
+  // Use button.background or textLink.foreground as primary accent for consistent UI theming
+  const accent = read('button.background', read('textLink.foreground', base.colors.primary.base));
   const accentFg = read('button.foreground', base.colors.primary.foreground || base.colors.surface.background);
+  // Action icons use icon.foreground for consistency with VSCode UI
+  const iconForeground = read('icon.foreground', foreground);
   const hoverBg = read('list.hoverBackground', read('editor.selectionBackground', base.colors.interactive.hover));
   const activeBg = read('list.activeSelectionBackground', hoverBg);
   const selection = read('editor.selectionBackground', activeBg);
@@ -279,6 +277,10 @@ export const buildVSCodeThemeFromPalette = (palette: VSCodeThemePalette): Theme 
   const badgeBg = read('badge.background', accent);
   const badgeFg = read('badge.foreground', foreground);
 
+  const diffInserted = palette.colors['diffEditor.insertedTextBorder']
+    ?? palette.colors['diffEditor.insertedLineBackground']
+    ?? palette.colors['diffEditor.insertedTextBackground']
+    ?? palette.colors['gitDecoration.addedResourceForeground'];
   const success = diffInserted
     ? forceOpaque(diffInserted)
     : read('testing.iconPassed', base.colors.status.success);
