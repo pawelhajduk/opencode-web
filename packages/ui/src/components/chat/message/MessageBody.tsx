@@ -243,7 +243,7 @@ const UserMessageBody: React.FC<{
             <MessageFilesDisplay files={parts} onShowPopup={onShowPopup} />
             {(canCopyMessage && hasCopyableText) || onRevert || onFork ? (
                 <div className={cn(
-                    "absolute top-2 right-2 flex items-center gap-0.5 opacity-0 pointer-events-none transition-opacity duration-150 group-hover/message:opacity-100 group-hover/message:pointer-events-auto focus-within:opacity-100 focus-within:pointer-events-auto bg-muted/40 dark:bg-muted/30 border border-border/30 rounded-lg px-1 py-1",
+                    "absolute -top-1.5 -right-2 flex items-center gap-0.5 opacity-0 pointer-events-none transition-opacity duration-150 group-hover/message:opacity-100 group-hover/message:pointer-events-auto focus-within:opacity-100 focus-within:pointer-events-auto bg-muted/40 dark:bg-muted border border-border rounded-lg px-1 py-1",
                     copyHintVisible && "opacity-100 pointer-events-auto"
                 )}>
                     {onRevert && (
@@ -1207,10 +1207,10 @@ const AssistantMessageBody: React.FC<Omit<MessageBodyProps, 'isUser'>> = ({
                                 onMouseLeave={() => setIsSummaryHovered(false)}
                             >
                                  <SimpleMarkdownRenderer content={summaryBody} />
-                                {shouldShowFooter && (
+                                 {shouldShowFooter && (
                                     <div
                                         className={cn(
-                                            "absolute top-2 right-2 flex items-center gap-0.5 opacity-0 pointer-events-none transition-opacity duration-150 focus-within:opacity-100 focus-within:pointer-events-auto bg-muted/40 dark:bg-muted/30 border border-border/30 rounded-lg px-1 py-1",
+                                            "absolute top-0 right-0 flex items-center gap-0.5 opacity-0 pointer-events-none transition-opacity duration-150 focus-within:opacity-100 focus-within:pointer-events-auto rounded-lg px-1 py-1",
                                             isSummaryHovered && "opacity-100 pointer-events-auto",
                                         )}
                                     >
@@ -1223,7 +1223,7 @@ const AssistantMessageBody: React.FC<Omit<MessageBodyProps, 'isUser'>> = ({
                 </div>
                 <MessageFilesDisplay files={parts} onShowPopup={onShowPopup} />
                 {!showSummaryBody && shouldShowFooter && (
-                    <div className="absolute top-2 right-2 flex items-center gap-0.5 opacity-0 pointer-events-none transition-opacity duration-150 group-hover/message:opacity-100 group-hover/message:pointer-events-auto focus-within:opacity-100 focus-within:pointer-events-auto bg-muted/40 dark:bg-muted/30 border border-border/30 rounded-lg px-1 py-1">
+                    <div className="absolute top-0 right-0 flex items-center gap-0.5 opacity-0 pointer-events-none transition-opacity duration-150 group-hover/message:opacity-100 group-hover/message:pointer-events-auto focus-within:opacity-100 focus-within:pointer-events-auto rounded-lg px-1 py-1">
                         {footerButtons}
                     </div>
                 )}
