@@ -283,7 +283,7 @@ const CollapsibleCodeBlock: React.FC<CollapsibleCodeBlockProps> = ({
     return (
         <div className={cn('relative', className)}>
             {showWrapToggle && (
-                <div className="absolute top-2 right-2 z-10">
+                <div className="absolute top-0 right-0 z-10">
                     <button
                         type="button"
                         onClick={() => setWrapLines(!wrapLines)}
