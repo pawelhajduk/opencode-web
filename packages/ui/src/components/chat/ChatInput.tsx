@@ -38,6 +38,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useContextStore } from '@/stores/contextStore';
+import { CollapsibleTodoSection } from './CollapsibleTodoSection';
 
 const MAX_VISIBLE_TEXTAREA_LINES = 8;
 const EMPTY_QUEUE: QueuedMessage[] = [];
@@ -1333,6 +1334,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onOpenSettings, scrollToBo
             data-keyboard-avoid="true"
             style={isMobile && inputBarOffset > 0 && !isKeyboardOpen ? { marginBottom: `${inputBarOffset}px` } : undefined}
         >
+            <CollapsibleTodoSection />
             {/* Absolute positioned above input - no layout shift */}
             <div className="absolute bottom-full left-0 right-0">
                 <StatusRow
