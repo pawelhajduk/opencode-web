@@ -9,17 +9,14 @@ import { useWorkerPool } from '@/contexts/DiffWorkerProvider';
 import { ensurePierreThemeRegistered, getResolvedShikiTheme } from '@/lib/shiki/appThemeRegistry';
 import { getDefaultTheme } from '@/lib/theme/themes';
 
-import { toast } from '@/components/ui';
 import { Textarea } from '@/components/ui/textarea';
 import { useSessionStore } from '@/stores/useSessionStore';
 import { useConfigStore } from '@/stores/useConfigStore';
-import { useContextStore } from '@/stores/contextStore';
 import { useUIStore } from '@/stores/useUIStore';
 import { useMessageQueueStore } from '@/stores/messageQueueStore';
 import { useCurrentSessionActivity } from '@/hooks/useSessionActivity';
 import { useDeviceInfo } from '@/lib/device';
 import { cn, getModifierLabel } from '@/lib/utils';
-
 
 interface PierreDiffViewerProps {
   original: string;
@@ -141,6 +138,7 @@ export const PierreDiffViewer: React.FC<PierreDiffViewerProps> = ({
   wrapLines = false,
   layout = 'fill',
 }) => {
+  const isInlineLayout = layout === 'inline';
   const { isMobile } = useDeviceInfo();
   const { inputBarOffset, isKeyboardOpen } = useUIStore();
 
@@ -187,9 +185,6 @@ export const PierreDiffViewer: React.FC<PierreDiffViewerProps> = ({
   const sendMessage = useSessionStore(state => state.sendMessage);
   const currentSessionId = useSessionStore(state => state.currentSessionId);
   const { currentProviderId, currentModelId, currentAgentName, currentVariant } = useConfigStore();
-  const getSessionAgentSelection = useContextStore(state => state.getSessionAgentSelection);
-  const getAgentModelForSession = useContextStore(state => state.getAgentModelForSession);
-  const getAgentModelVariantForSession = useContextStore(state => state.getAgentModelVariantForSession);
   const queueModeEnabled = useMessageQueueStore(state => state.queueModeEnabled);
   const addToQueue = useMessageQueueStore(state => state.addToQueue);
   const { phase: sessionPhase } = useCurrentSessionActivity();
@@ -276,25 +271,10 @@ export const PierreDiffViewer: React.FC<PierreDiffViewerProps> = ({
 
   const handleSendComment = useCallback(async () => {
     if (!selection || !commentText.trim()) return;
-    if (!currentSessionId) {
-      toast.error('Select a session to send comment');
+    if (!currentSessionId || !currentProviderId || !currentModelId) {
+      console.warn('Cannot send comment: no active session or model not selected');
       return;
     }
-
-    // Get session-specific agent/model/variant with fallback to config values
-    const sessionAgent = getSessionAgentSelection(currentSessionId) || currentAgentName;
-    const sessionModel = sessionAgent ? getAgentModelForSession(currentSessionId, sessionAgent) : null;
-    const effectiveProviderId = sessionModel?.providerId || currentProviderId;
-    const effectiveModelId = sessionModel?.modelId || currentModelId;
-
-    if (!effectiveProviderId || !effectiveModelId) {
-      toast.error('Select a model to send comment');
-      return;
-    }
-
-    const effectiveVariant = sessionAgent && effectiveProviderId && effectiveModelId
-      ? getAgentModelVariantForSession(currentSessionId, sessionAgent, effectiveProviderId, effectiveModelId) ?? currentVariant
-      : currentVariant;
 
     const code = extractSelectedCode(original, modified, selection);
     const startLine = selection.start;
@@ -313,20 +293,22 @@ export const PierreDiffViewer: React.FC<PierreDiffViewerProps> = ({
     if (queueModeEnabled && canQueue) {
       addToQueue(currentSessionId, { content: message });
     } else {
-      void sendMessage(
-        message,
-        effectiveProviderId,
-        effectiveModelId,
-        sessionAgent,
-        undefined,
-        undefined,
-        undefined,
-        effectiveVariant
-      ).catch((e) => {
-        console.error('Failed to send comment', e);
-      });
+      try {
+      await sendMessage(
+          message,
+          currentProviderId,
+          currentModelId,
+          currentAgentName,
+          undefined,
+          undefined,
+          undefined,
+          currentVariant
+        );
+    } catch (e) {
+        console.error("Failed to send comment", e);
+      }
     }
-  }, [selection, commentText, original, modified, fileName, language, sendMessage, currentSessionId, currentProviderId, currentModelId, currentAgentName, currentVariant, setActiveMainTab, getSessionAgentSelection, getAgentModelForSession, getAgentModelVariantForSession, queueModeEnabled, sessionPhase, addToQueue]);
+  }, [selection, commentText, original, modified, fileName, language, sendMessage, currentSessionId, currentProviderId, currentModelId, currentAgentName, currentVariant, setActiveMainTab, queueModeEnabled, sessionPhase, addToQueue]);
   const currentThemeId = themeSystem?.currentTheme?.metadata?.id;
 
   ensurePierreThemeRegistered(lightTheme);
