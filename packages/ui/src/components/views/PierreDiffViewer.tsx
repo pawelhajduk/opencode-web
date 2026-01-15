@@ -18,6 +18,7 @@ import { useCurrentSessionActivity } from '@/hooks/useSessionActivity';
 import { useDeviceInfo } from '@/lib/device';
 import { cn, getModifierLabel } from '@/lib/utils';
 
+
 interface PierreDiffViewerProps {
   original: string;
   modified: string;
@@ -271,8 +272,19 @@ export const PierreDiffViewer: React.FC<PierreDiffViewerProps> = ({
 
   const handleSendComment = useCallback(async () => {
     if (!selection || !commentText.trim()) return;
-    if (!currentSessionId || !currentProviderId || !currentModelId) {
-      console.warn('Cannot send comment: no active session or model not selected');
+    if (!currentSessionId) {
+      toast.error('Select a session to send comment');
+      return;
+    }
+
+    // Get session-specific agent/model/variant with fallback to config values
+    const sessionAgent = getSessionAgentSelection(currentSessionId) || currentAgentName;
+    const sessionModel = sessionAgent ? getAgentModelForSession(currentSessionId, sessionAgent) : null;
+    const effectiveProviderId = sessionModel?.providerId || currentProviderId;
+    const effectiveModelId = sessionModel?.modelId || currentModelId;
+
+    if (!effectiveProviderId || !effectiveModelId) {
+      toast.error('Select a model to send comment');
       return;
     }
 
