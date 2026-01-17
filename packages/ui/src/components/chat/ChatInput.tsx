@@ -38,6 +38,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { CollapsibleTodoSection } from './CollapsibleTodoSection';
 
 const MAX_VISIBLE_TEXTAREA_LINES = 8;
 const EMPTY_QUEUE: QueuedMessage[] = [];
@@ -1222,7 +1223,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onOpenSettings, scrollToBo
             className={cn(
                 iconButtonBaseClass,
                 canSend && (currentSessionId || newSessionDraftOpen)
-                    ? 'text-primary hover:text-primary'
+                    ? 'text-foreground hover:text-foreground/80'
                     : 'opacity-30'
             )}
             aria-label='Send message'
@@ -1357,6 +1358,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onOpenSettings, scrollToBo
             data-keyboard-avoid="true"
             style={isMobile && inputBarOffset > 0 && !isKeyboardOpen ? { marginBottom: `${inputBarOffset}px` } : undefined}
         >
+            <CollapsibleTodoSection />
             <StatusRow
                 isWorking={working.isWorking}
                 statusText={workingStatusText}

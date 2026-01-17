@@ -15,17 +15,28 @@
   --oc-keyboard-avoid-offset: 0px;
   --oc-keyboard-home-indicator: 0px;
   --ui-regular-font-weight: 400;
+  --ui-regular-font-weight-mono: 500;
   --oc-scrollbar-thumb: oklch(0.32 0.03 50 / 0.4);
   --oc-scrollbar-thumb-hover: oklch(0.32 0.03 50 / 0.6);
   --padding-scale: 1;
 
   /* Semantic typography defaults (must match SEMANTIC_TYPOGRAPHY) */
   --text-markdown: 0.9375rem;
-  --text-code: 0.9063rem;
+  --text-code: 0.8750rem;
   --text-ui-header: 0.9375rem;
   --text-ui-label: 0.8750rem;
   --text-meta: 0.875rem;
   --text-micro: 0.875rem;
+}
+
+/* VS Code runtime: derive typography from VS Code's native font size variables */
+:root.vscode-runtime {
+  --text-markdown: var(--vscode-font-size, 0.9063rem);
+  --text-ui-header: var(--vscode-font-size, 0.9063rem);
+  --text-ui-label: calc(var(--vscode-font-size, 13px) * 0.923);
+  --text-meta: calc(var(--vscode-font-size, 13px) * 0.923);
+  --text-micro: calc(var(--vscode-font-size, 13px) * 0.846);
+  --text-code: var(--vscode-editor-font-size, 0.8750rem);
 }
 
 @custom-variant dark (&:is(.dark *));
@@ -48,6 +59,51 @@ textarea[data-chat-input="true"]:hover {
 
 :root.vscode-runtime textarea[data-chat-input="true"]::placeholder {
   color: color-mix(in srgb, var(--vscode-input-placeholderForeground, var(--muted-foreground)) 65%, transparent);
+}
+
+:root.vscode-runtime textarea[data-chat-input="true"] {
+  font-family: var(--vscode-font-family, var(--font-sans)) !important;
+}
+
+:root.vscode-runtime {
+  --radius: 0.5rem;
+}
+
+:root.vscode-runtime body,
+:root.vscode-runtime button,
+:root.vscode-runtime input,
+:root.vscode-runtime select,
+:root.vscode-runtime textarea,
+:root.vscode-runtime label,
+:root.vscode-runtime [role="dialog"],
+:root.vscode-runtime [role="button"],
+:root.vscode-runtime [data-slot="tooltip-content"],
+:root.vscode-runtime .typography-ui-label,
+:root.vscode-runtime .typography-ui-header,
+:root.vscode-runtime .typography-ui-button,
+:root.vscode-runtime .streamdown-content {
+  font-family: var(--vscode-font-family, var(--font-sans)) !important;
+}
+
+:root.vscode-runtime .streamdown-content code,
+:root.vscode-runtime .streamdown-content pre {
+  font-family: var(--vscode-editor-font-family, var(--font-mono)) !important;
+}
+
+:root.vscode-runtime [data-slot="tooltip-content"],
+:root.vscode-runtime [data-radix-popper-content-wrapper],
+:root.vscode-runtime [role="menu"],
+:root.vscode-runtime [role="listbox"] {
+  background: var(--background) !important;
+  border: 1px solid var(--border) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+:root.vscode-runtime [role="dialog"],
+:root.vscode-runtime [role="tooltip"] {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 /* Match chat footer background to input in WebKit to avoid dual-tone hover/focus */
@@ -592,9 +648,9 @@ body {
   --markdown-heading4-size: var(--text-markdown);
   --markdown-heading5-size: var(--text-markdown);
   --markdown-heading6-size: var(--text-markdown);
-  --font-sans: "IBM Plex Mono", "JetBrains Mono", "Fira Code", "SFMono-Regular", "Menlo", monospace;
+  --font-sans: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-heading: var(--font-sans);
-  --font-mono: "IBM Plex Mono", "JetBrains Mono", "Fira Code", "SFMono-Regular", "Menlo", monospace;
+  --font-mono: "IBM Plex Mono Nerd Font", "JetBrains Mono", "Fira Code", "SFMono-Regular", "Menlo", monospace;
   --font-family-sans: var(--font-sans);
   --font-family-mono: var(--font-mono);
 }
@@ -617,6 +673,7 @@ body {
   code,
   pre {
     font-family: var(--font-mono, ui-monospace, SFMono-Regular, 'Liberation Mono', Menlo, monospace) !important;
+    font-weight: var(--ui-regular-font-weight-mono, 500) !important;
   }
 
   /* Remove focus rings globally */
@@ -806,7 +863,7 @@ html:not(.dark) .chat-scroll {
 
 /* Pierre diff viewer styling */
 .pierre-diff-wrapper {
-  --diffs-font-family: var(--font-mono, 'IBM Plex Mono', monospace);
+  --diffs-font-family: var(--font-mono, 'IBM Plex Mono Nerd Font', monospace);
   --diffs-font-size: var(--text-code, 13px);
   --diffs-line-height: 1.5;
   --diffs-tab-size: 2;

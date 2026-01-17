@@ -5,8 +5,7 @@ import type { SupportedLanguages } from '@pierre/diffs';
 
 import { useOptionalThemeSystem } from './useThemeSystem';
 import { workerFactory } from '@/lib/diff/workerFactory';
-import { ensureFlexokiThemesRegistered } from '@/lib/shiki/registerFlexokiThemes';
-import { flexokiThemeNames } from '@/lib/shiki/flexokiThemes';
+import { ensureDiffThemesRegistered, getDiffThemeForUITheme } from '@/lib/diffThemes';
 import { useGitStore } from '@/stores/useGitStore';
 import { getLanguageFromExtension } from '@/lib/toolHelpers';
 
@@ -174,17 +173,23 @@ const WorkerPoolWarmup: React.FC<{ children: React.ReactNode }> = ({ children })
 export const DiffWorkerProvider: React.FC<DiffWorkerProviderProps> = ({ children }) => {
   const themeSystem = useOptionalThemeSystem();
   const isDark = themeSystem?.currentTheme?.metadata?.variant === 'dark';
+  const currentThemeId = themeSystem?.currentTheme?.metadata?.id;
 
-  ensureFlexokiThemesRegistered();
+  ensureDiffThemesRegistered();
 
-  const highlighterOptions = useMemo(() => ({
-    theme: {
-      dark: flexokiThemeNames.dark,
-      light: flexokiThemeNames.light,
-    },
-    themeType: isDark ? ('dark' as const) : ('light' as const),
-    langs: PRELOAD_LANGS,
-  }), [isDark]);
+  const highlighterOptions = useMemo(() => {
+    const currentShikiTheme = getDiffThemeForUITheme(currentThemeId, isDark);
+    const lightTheme = getDiffThemeForUITheme(currentThemeId, false);
+
+    return {
+      theme: {
+        dark: currentShikiTheme,
+        light: lightTheme,
+      },
+      themeType: isDark ? ('dark' as const) : ('light' as const),
+      langs: PRELOAD_LANGS,
+    };
+  }, [isDark, currentThemeId]);
 
   return (
     <WorkerPoolContextProvider

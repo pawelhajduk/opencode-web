@@ -50,11 +50,21 @@ export type VSCodeThemeColorToken =
   | 'list.hoverBackground'
   | 'list.activeSelectionBackground'
   | 'textPreformat.foreground'
-  | 'textPreformat.background';
+  | 'textPreformat.background'
+  | 'icon.foreground';
+
+export type VSCodeFontToken =
+  | 'font.family'
+  | 'font.size'
+  | 'editor.fontFamily'
+  | 'editor.fontSize'
+  | 'editor.fontWeight'
+  | 'editor.lineHeight';
 
 export type VSCodeThemePalette = {
   kind: VSCodeThemeKind;
   colors: Partial<Record<VSCodeThemeColorToken, string>>;
+  fonts?: Partial<Record<VSCodeFontToken, string>>;
   mode?: ThemeMode;
 };
 
@@ -110,9 +120,26 @@ const VARIABLE_MAP: Record<VSCodeThemeColorToken, string> = {
   'list.activeSelectionBackground': '--vscode-list-activeSelectionBackground',
   'textPreformat.foreground': '--vscode-textPreformat-foreground',
   'textPreformat.background': '--vscode-textPreformat-background',
+  'icon.foreground': '--vscode-icon-foreground',
+};
+
+const FONT_VARIABLE_MAP: Record<VSCodeFontToken, string> = {
+  'font.family': '--vscode-font-family',
+  'font.size': '--vscode-font-size',
+  'editor.fontFamily': '--vscode-editor-font-family',
+  'editor.fontSize': '--vscode-editor-font-size',
+  'editor.fontWeight': '--vscode-editor-font-weight',
+  'editor.lineHeight': '--vscode-editor-lineHeight',
 };
 
 const normalizeColor = (value?: string | null): string | undefined => {
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  return trimmed;
+};
+
+const normalizeFontValue = (value?: string | null): string | undefined => {
   if (!value) return undefined;
   const trimmed = value.trim();
   if (!trimmed) return undefined;
@@ -191,9 +218,21 @@ export const readVSCodeThemePalette = (
     }
   });
 
+  const fonts: Partial<Record<VSCodeFontToken, string>> = {};
+
+  (Object.keys(FONT_VARIABLE_MAP) as VSCodeFontToken[]).forEach((token) => {
+    const cssVar = FONT_VARIABLE_MAP[token];
+    const value = normalizeFontValue(rootStyles.getPropertyValue(cssVar))
+      ?? (bodyStyles ? normalizeFontValue(bodyStyles.getPropertyValue(cssVar)) : undefined);
+    if (value) {
+      fonts[token] = value;
+    }
+  });
+
   return {
     kind: readKind(preferredKind),
     colors,
+    fonts: Object.keys(fonts).length > 0 ? fonts : undefined,
     mode: preferredMode,
   };
 };
@@ -202,6 +241,9 @@ export const buildVSCodeThemeFromPalette = (palette: VSCodeThemePalette): Theme 
   const base = palette.kind === 'light' ? flexokiLightTheme : flexokiDarkTheme;
   const read = (token: VSCodeThemeColorToken, fallback: string): string =>
     palette.colors[token] ?? fallback;
+
+  const readFont = (token: VSCodeFontToken): string | undefined =>
+    palette.fonts?.[token];
 
   const sidebarBg = read('sideBar.background', base.colors.surface.background);
   const panelBg = read('panel.background', read('editor.background', base.colors.surface.elevated));
@@ -212,15 +254,11 @@ export const buildVSCodeThemeFromPalette = (palette: VSCodeThemePalette): Theme 
   // This makes inactive tabs and secondary text clearly distinguishable from active/primary text
   const rawMutedFg = read('descriptionForeground', base.colors.surface.mutedForeground);
   const mutedFg = applyAlpha(rawMutedFg, palette.kind === 'light' ? 0.55 : 0.5);
-  // Prefer VS Code's "added diff" color as our primary accent when available (users expect this to match their theme).
-  const diffInserted = palette.colors['diffEditor.insertedTextBorder']
-    ?? palette.colors['diffEditor.insertedLineBackground']
-    ?? palette.colors['diffEditor.insertedTextBackground']
-    ?? palette.colors['gitDecoration.addedResourceForeground'];
-  const accent = diffInserted
-    ? forceOpaque(diffInserted)
-    : read('button.background', read('textLink.foreground', base.colors.primary.base));
+  // Use button.background or textLink.foreground as primary accent for consistent UI theming
+  const accent = read('button.background', read('textLink.foreground', base.colors.primary.base));
   const accentFg = read('button.foreground', base.colors.primary.foreground || base.colors.surface.background);
+  // Action icons use icon.foreground for consistency with VSCode UI
+  const iconForeground = read('icon.foreground', foreground);
   const hoverBg = read('list.hoverBackground', read('editor.selectionBackground', base.colors.interactive.hover));
   const activeBg = read('list.activeSelectionBackground', hoverBg);
   const selection = read('editor.selectionBackground', activeBg);
@@ -239,6 +277,10 @@ export const buildVSCodeThemeFromPalette = (palette: VSCodeThemePalette): Theme 
   const badgeBg = read('badge.background', accent);
   const badgeFg = read('badge.foreground', foreground);
 
+  const diffInserted = palette.colors['diffEditor.insertedTextBorder']
+    ?? palette.colors['diffEditor.insertedLineBackground']
+    ?? palette.colors['diffEditor.insertedTextBackground']
+    ?? palette.colors['gitDecoration.addedResourceForeground'];
   const success = diffInserted
     ? forceOpaque(diffInserted)
     : read('testing.iconPassed', base.colors.status.success);
@@ -337,6 +379,14 @@ export const buildVSCodeThemeFromPalette = (palette: VSCodeThemePalette): Theme 
           fg: badgeFg,
           border: border,
         },
+      },
+    },
+    config: {
+      ...base.config,
+      fonts: {
+        sans: readFont('font.family') ?? base.config?.fonts?.sans,
+        mono: readFont('editor.fontFamily') ?? base.config?.fonts?.mono,
+        heading: readFont('font.family') ?? base.config?.fonts?.heading,
       },
     },
   };

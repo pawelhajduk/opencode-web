@@ -5,7 +5,7 @@ import type { Part } from '@opencode-ai/sdk/v2';
 import { cn } from '@/lib/utils';
 import { RiFileCopyLine, RiCheckLine, RiDownloadLine } from '@remixicon/react';
 
-import { flexokiStreamdownThemes } from '@/lib/shiki/flexokiThemes';
+import { streamdownThemes } from '@/lib/diffThemes';
 import { isVSCodeRuntime } from '@/lib/desktop';
 
 const withStableStringId = <T extends object>(value: T, id: string): T => {
@@ -45,23 +45,33 @@ const withStableStringId = <T extends object>(value: T, id: string): T => {
 
 const getMarkdownShikiThemes = (): readonly [string | object, string | object] => {
   if (!isVSCodeRuntime() || typeof window === 'undefined') {
-    return flexokiStreamdownThemes;
+    return streamdownThemes;
   }
 
   const provided = window.__OPENCHAMBER_VSCODE_SHIKI_THEMES__;
-  if (provided?.light && provided?.dark) {
-    const light = withStableStringId(
-      { ...(provided.light as Record<string, unknown>) },
-      `vscode-shiki-light:${String((provided.light as { name?: unknown })?.name ?? 'theme')}`,
-    );
-    const dark = withStableStringId(
-      { ...(provided.dark as Record<string, unknown>) },
-      `vscode-shiki-dark:${String((provided.dark as { name?: unknown })?.name ?? 'theme')}`,
-    );
-    return [light, dark] as const;
+  if (!provided) {
+    return streamdownThemes;
   }
 
-  return flexokiStreamdownThemes;
+  const hasLight = provided.light && typeof provided.light === 'object';
+  const hasDark = provided.dark && typeof provided.dark === 'object';
+
+  if (!hasLight && !hasDark) {
+    return streamdownThemes;
+  }
+
+  const effectiveLight = provided.light ?? provided.dark;
+  const effectiveDark = provided.dark ?? provided.light;
+
+  const light = withStableStringId(
+    { ...(effectiveLight as Record<string, unknown>) },
+    `vscode-shiki-light:${String((effectiveLight as { name?: unknown })?.name ?? 'theme')}`,
+  );
+  const dark = withStableStringId(
+    { ...(effectiveDark as Record<string, unknown>) },
+    `vscode-shiki-dark:${String((effectiveDark as { name?: unknown })?.name ?? 'theme')}`,
+  );
+  return [light, dark] as const;
 };
 
 const useMarkdownShikiThemes = (): readonly [string | object, string | object] => {

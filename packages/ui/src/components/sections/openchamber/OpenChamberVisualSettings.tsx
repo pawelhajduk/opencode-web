@@ -8,6 +8,8 @@ import { useMessageQueueStore } from '@/stores/messageQueueStore';
 import { cn, getModifierLabel } from '@/lib/utils';
 import { ButtonSmall } from '@/components/ui/button-small';
 import { NumberInput } from '@/components/ui/number-input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { UI_FONT_OPTIONS, CODE_FONT_OPTIONS, UI_FONT_OPTION_MAP, CODE_FONT_OPTION_MAP } from '@/lib/fontOptions';
 import { isVSCodeRuntime } from '@/lib/desktop';
 import { useDeviceInfo } from '@/lib/device';
 
@@ -69,7 +71,12 @@ const DIFF_VIEW_MODE_OPTIONS: Option<'single' | 'stacked'>[] = [
     },
 ];
 
-export type VisibleSetting = 'theme' | 'fontSize' | 'spacing' | 'inputBarOffset' | 'toolOutput' | 'diffLayout' | 'reasoning' | 'queueMode';
+export type VisibleSetting = 'theme' | 'colorScheme' | 'fonts' | 'fontSize' | 'spacing' | 'inputBarOffset' | 'toolOutput' | 'diffLayout' | 'reasoning' | 'queueMode';
+
+const COLOR_SCHEME_OPTIONS: Array<{ id: string; label: string; lightThemeId: string; darkThemeId: string }> = [
+    { id: 'vercel', label: 'Vercel', lightThemeId: 'vercel-light', darkThemeId: 'vercel-dark' },
+    { id: 'flexoki', label: 'Flexoki', lightThemeId: 'flexoki-light', darkThemeId: 'flexoki-dark' },
+];
 
 interface OpenChamberVisualSettingsProps {
     /** Which settings to show. If undefined, shows all. */
@@ -88,6 +95,10 @@ export const OpenChamberVisualSettings: React.FC<OpenChamberVisualSettingsProps>
     const setPadding = useUIStore(state => state.setPadding);
     const inputBarOffset = useUIStore(state => state.inputBarOffset);
     const setInputBarOffset = useUIStore(state => state.setInputBarOffset);
+    const uiFont = useUIStore(state => state.uiFont);
+    const setUiFont = useUIStore(state => state.setUiFont);
+    const monoFont = useUIStore(state => state.monoFont);
+    const setMonoFont = useUIStore(state => state.setMonoFont);
     const diffLayoutPreference = useUIStore(state => state.diffLayoutPreference);
     const setDiffLayoutPreference = useUIStore(state => state.setDiffLayoutPreference);
     const diffViewMode = useUIStore(state => state.diffViewMode);
@@ -97,7 +108,23 @@ export const OpenChamberVisualSettings: React.FC<OpenChamberVisualSettingsProps>
     const {
         themeMode,
         setThemeMode,
+        lightThemeId,
+        darkThemeId,
+        setLightThemePreference,
+        setDarkThemePreference,
     } = useThemeSystem();
+
+    const currentColorScheme = COLOR_SCHEME_OPTIONS.find(
+        (scheme) => scheme.lightThemeId === lightThemeId && scheme.darkThemeId === darkThemeId
+    )?.id ?? 'vercel';
+
+    const handleColorSchemeChange = (schemeId: string) => {
+        const scheme = COLOR_SCHEME_OPTIONS.find((s) => s.id === schemeId);
+        if (scheme) {
+            setLightThemePreference(scheme.lightThemeId);
+            setDarkThemePreference(scheme.darkThemeId);
+        }
+    };
 
     const shouldShow = (setting: VisibleSetting): boolean => {
         if (!visibleSettings) return true;
@@ -129,7 +156,84 @@ export const OpenChamberVisualSettings: React.FC<OpenChamberVisualSettingsProps>
                 </div>
             )}
 
-            {shouldShow('fontSize') && !isMobile && (
+            {shouldShow('colorScheme') && !isVSCodeRuntime() && (
+                <div className="space-y-4">
+                    <div className="space-y-1">
+                        <h3 className="typography-ui-header font-semibold text-foreground">
+                            Color Scheme
+                        </h3>
+                        <p className="typography-meta text-muted-foreground">
+                            Select the color palette for the app and diff editor.
+                        </p>
+                    </div>
+
+                    <Select value={currentColorScheme} onValueChange={handleColorSchemeChange}>
+                        <SelectTrigger className="w-40">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {COLOR_SCHEME_OPTIONS.map((scheme) => (
+                                <SelectItem key={scheme.id} value={scheme.id}>
+                                    {scheme.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            )}
+
+            {shouldShow('fonts') && !isVSCodeRuntime() && (
+                <div className="space-y-4">
+                    <div className="space-y-1">
+                        <h3 className="typography-ui-header font-semibold text-foreground">
+                            Fonts
+                        </h3>
+                        <p className="typography-meta text-muted-foreground">
+                            Choose fonts for the interface and code blocks.
+                        </p>
+                    </div>
+
+                    <div className="flex flex-col gap-4 sm:flex-row sm:gap-6">
+                        <div className="space-y-2">
+                            <div className="typography-ui-label text-muted-foreground">
+                                Interface Font
+                            </div>
+                            <Select value={uiFont} onValueChange={setUiFont}>
+                                <SelectTrigger className="w-44" style={{ fontFamily: UI_FONT_OPTION_MAP[uiFont].stack }}>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {UI_FONT_OPTIONS.map((font) => (
+                                        <SelectItem key={font.id} value={font.id} style={{ fontFamily: font.stack }}>
+                                            {font.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <div className="typography-ui-label text-muted-foreground">
+                                Code Font
+                            </div>
+                            <Select value={monoFont} onValueChange={setMonoFont}>
+                                <SelectTrigger className="w-44" style={{ fontFamily: CODE_FONT_OPTION_MAP[monoFont].stack }}>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {CODE_FONT_OPTIONS.map((font) => (
+                                        <SelectItem key={font.id} value={font.id} style={{ fontFamily: font.stack }}>
+                                            {font.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {shouldShow('fontSize') && (
                 <div className="space-y-4">
                     <div className="space-y-1">
                         <h3 className="typography-ui-header font-semibold text-foreground">
@@ -137,36 +241,68 @@ export const OpenChamberVisualSettings: React.FC<OpenChamberVisualSettingsProps>
                         </h3>
 
                     </div>
-                    <div className="flex items-center gap-3 w-full max-w-md">
-                        <input
-                            type="range"
-                            min="50"
-                            max="200"
-                            step="5"
-                            value={fontSize}
-                            onChange={(e) => setFontSize(Number(e.target.value))}
-                            className="flex-1 min-w-0 h-2 bg-muted rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:border-0"
-                        />
-                        <NumberInput
-                            value={fontSize}
-                            onValueChange={setFontSize}
-                            min={50}
-                            max={200}
-                            step={5}
-                            aria-label="Font size percentage"
-                        />
-                        <ButtonSmall
-                            type="button"
-                            variant="ghost"
-                            onClick={() => setFontSize(100)}
-                            disabled={fontSize === 100}
-                            className="h-8 w-8 px-0 border border-border bg-background hover:bg-accent disabled:opacity-100 disabled:bg-background"
-                            aria-label="Reset font size"
-                            title="Reset"
-                        >
-                            <RiRestartLine className="h-3.5 w-3.5" />
-                        </ButtonSmall>
-                    </div>
+
+                    {isMobile ? (
+                        <div className="flex items-center gap-2 w-full">
+                            <input
+                                type="range"
+                                min="50"
+                                max="200"
+                                step="5"
+                                value={fontSize}
+                                onChange={(e) => setFontSize(Number(e.target.value))}
+                                className="flex-1 min-w-0 h-3 bg-muted rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:border-0"
+                                aria-label="Font size percentage"
+                            />
+
+                            <span className="typography-ui-label font-medium text-foreground tabular-nums rounded-md border border-border bg-background px-2 py-1.5 min-w-[3.75rem] text-center">
+                                {fontSize}
+                            </span>
+
+                            <ButtonSmall
+                                type="button"
+                                variant="ghost"
+                                onClick={() => setFontSize(100)}
+                                disabled={fontSize === 100}
+                                className="h-8 w-8 px-0 border border-border bg-background hover:bg-accent disabled:opacity-100 disabled:bg-background"
+                                aria-label="Reset font size"
+                                title="Reset"
+                            >
+                                <RiRestartLine className="h-3.5 w-3.5" />
+                            </ButtonSmall>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-3 w-full max-w-md">
+                            <input
+                                type="range"
+                                min="50"
+                                max="200"
+                                step="5"
+                                value={fontSize}
+                                onChange={(e) => setFontSize(Number(e.target.value))}
+                                className="flex-1 min-w-0 h-2 bg-muted rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:border-0"
+                            />
+                            <NumberInput
+                                value={fontSize}
+                                onValueChange={setFontSize}
+                                min={50}
+                                max={200}
+                                step={5}
+                                aria-label="Font size percentage"
+                            />
+                            <ButtonSmall
+                                type="button"
+                                variant="ghost"
+                                onClick={() => setFontSize(100)}
+                                disabled={fontSize === 100}
+                                className="h-8 w-8 px-0 border border-border bg-background hover:bg-accent disabled:opacity-100 disabled:bg-background"
+                                aria-label="Reset font size"
+                                title="Reset"
+                            >
+                                <RiRestartLine className="h-3.5 w-3.5" />
+                            </ButtonSmall>
+                        </div>
+                    )}
                 </div>
             )}
 
