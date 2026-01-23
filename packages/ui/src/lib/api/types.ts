@@ -448,9 +448,19 @@ export interface ToolsAPI {
   getAvailableTools(): Promise<string[]>;
 }
 
+export interface OpenAIDiffParams {
+  filePath: string;
+  originalContent?: string;
+  modifiedContent?: string;
+  diff?: string;
+  label?: string;
+  languageId?: string;
+}
+
 export interface EditorAPI {
   openFile(path: string, line?: number, column?: number): Promise<void>;
   openDiff(original: string, modified: string, label?: string): Promise<void>;
+  openAIDiff?(params: OpenAIDiffParams): Promise<void>;
 }
 
 export interface VSCodeAPI {

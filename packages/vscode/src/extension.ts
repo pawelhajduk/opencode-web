@@ -3,11 +3,13 @@ import { ChatViewProvider } from './ChatViewProvider';
 import { AgentManagerPanelProvider } from './AgentManagerPanelProvider';
 import { SessionEditorPanelProvider } from './SessionEditorPanelProvider';
 import { createOpenCodeManager, type OpenCodeManager } from './opencode';
+import { DiffContentProvider, DIFF_SCHEME } from './DiffContentProvider';
 
 let chatViewProvider: ChatViewProvider | undefined;
 let agentManagerProvider: AgentManagerPanelProvider | undefined;
 let sessionEditorProvider: SessionEditorPanelProvider | undefined;
 let openCodeManager: OpenCodeManager | undefined;
+let diffContentProvider: DiffContentProvider | undefined;
 let outputChannel: vscode.OutputChannel | undefined;
 
 let activeSessionId: string | null = null;
@@ -117,9 +119,14 @@ export async function activate(context: vscode.ExtensionContext) {
   // Create OpenCode manager first
   openCodeManager = createOpenCodeManager(context);
 
+  diffContentProvider = new DiffContentProvider();
+  context.subscriptions.push(
+    vscode.workspace.registerTextDocumentContentProvider(DIFF_SCHEME, diffContentProvider)
+  );
+
   // Create chat view provider with manager reference
   // The webview will show a loading state until OpenCode is ready
-  chatViewProvider = new ChatViewProvider(context, context.extensionUri, openCodeManager);
+  chatViewProvider = new ChatViewProvider(context, context.extensionUri, openCodeManager, diffContentProvider);
 
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(
@@ -157,8 +164,8 @@ export async function activate(context: vscode.ExtensionContext) {
   void maybeMoveChatToRightSidebarOnStartup();
 
   // Create Agent Manager panel provider
-  agentManagerProvider = new AgentManagerPanelProvider(context, context.extensionUri, openCodeManager);
-  sessionEditorProvider = new SessionEditorPanelProvider(context, context.extensionUri, openCodeManager);
+  agentManagerProvider = new AgentManagerPanelProvider(context, context.extensionUri, openCodeManager, diffContentProvider);
+  sessionEditorProvider = new SessionEditorPanelProvider(context, context.extensionUri, openCodeManager, diffContentProvider);
 
   context.subscriptions.push(
     vscode.commands.registerCommand('openchamber.openAgentManager', () => {
