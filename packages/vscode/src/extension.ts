@@ -2,12 +2,14 @@ import * as vscode from 'vscode';
 import { ChatViewProvider } from './ChatViewProvider';
 import { AgentManagerPanelProvider } from './AgentManagerPanelProvider';
 import { SessionEditorPanelProvider } from './SessionEditorPanelProvider';
+import { SettingsPanelProvider } from './SettingsPanelProvider';
 import { createOpenCodeManager, type OpenCodeManager } from './opencode';
 import { DiffContentProvider, DIFF_SCHEME } from './DiffContentProvider';
 
 let chatViewProvider: ChatViewProvider | undefined;
 let agentManagerProvider: AgentManagerPanelProvider | undefined;
 let sessionEditorProvider: SessionEditorPanelProvider | undefined;
+let settingsPanelProvider: SettingsPanelProvider | undefined;
 let openCodeManager: OpenCodeManager | undefined;
 let diffContentProvider: DiffContentProvider | undefined;
 let outputChannel: vscode.OutputChannel | undefined;
@@ -166,10 +168,17 @@ export async function activate(context: vscode.ExtensionContext) {
   // Create Agent Manager panel provider
   agentManagerProvider = new AgentManagerPanelProvider(context, context.extensionUri, openCodeManager, diffContentProvider);
   sessionEditorProvider = new SessionEditorPanelProvider(context, context.extensionUri, openCodeManager, diffContentProvider);
+  settingsPanelProvider = new SettingsPanelProvider(context, context.extensionUri, openCodeManager, diffContentProvider);
 
   context.subscriptions.push(
     vscode.commands.registerCommand('openchamber.openAgentManager', () => {
       agentManagerProvider?.createOrShow();
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('openchamber.openSettings', () => {
+      settingsPanelProvider?.createOrShow();
     })
   );
 
@@ -338,7 +347,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(
     vscode.commands.registerCommand('openchamber.showSettings', () => {
-      chatViewProvider?.showSettings();
+      settingsPanelProvider?.createOrShow();
     })
   );
 
@@ -520,6 +529,7 @@ export async function activate(context: vscode.ExtensionContext) {
       chatViewProvider?.updateTheme(theme.kind);
       agentManagerProvider?.updateTheme(theme.kind);
       sessionEditorProvider?.updateTheme(theme.kind);
+      settingsPanelProvider?.updateTheme(theme.kind);
     })
   );
 
@@ -536,6 +546,7 @@ export async function activate(context: vscode.ExtensionContext) {
         chatViewProvider?.updateTheme(vscode.window.activeColorTheme.kind);
         agentManagerProvider?.updateTheme(vscode.window.activeColorTheme.kind);
         sessionEditorProvider?.updateTheme(vscode.window.activeColorTheme.kind);
+        settingsPanelProvider?.updateTheme(vscode.window.activeColorTheme.kind);
       }
     })
   );
@@ -546,6 +557,7 @@ export async function activate(context: vscode.ExtensionContext) {
       chatViewProvider?.updateConnectionStatus(status, error);
       agentManagerProvider?.updateConnectionStatus(status, error);
       sessionEditorProvider?.updateConnectionStatus(status, error);
+      settingsPanelProvider?.updateConnectionStatus(status, error);
     })
   );
 
@@ -560,6 +572,7 @@ export async function deactivate() {
   chatViewProvider = undefined;
   agentManagerProvider = undefined;
   sessionEditorProvider = undefined;
+  settingsPanelProvider = undefined;
   outputChannel?.dispose();
   outputChannel = undefined;
 }

@@ -75,7 +75,7 @@ const DIFF_VIEW_MODE_OPTIONS: Option<'single' | 'stacked'>[] = [
     },
 ];
 
-export type VisibleSetting = 'theme' | 'colorScheme' | 'fonts' | 'fontSize' | 'spacing' | 'cornerRadius' | 'inputBarOffset' | 'toolOutput' | 'diffLayout' | 'dotfiles' | 'reasoning' | 'queueMode';
+export type VisibleSetting = 'theme' | 'colorScheme' | 'fonts' | 'fontSize' | 'spacing' | 'cornerRadius' | 'inputBarOffset' | 'toolOutput' | 'diffLayout' | 'dotfiles' | 'reasoning' | 'queueMode' | 'autoOpenDiff';
 
 const COLOR_SCHEME_OPTIONS: Array<{ id: string; label: string; lightThemeId: string; darkThemeId: string }> = [
     { id: 'vercel', label: 'Vercel', lightThemeId: 'vercel-light', darkThemeId: 'vercel-dark' },
@@ -110,6 +110,8 @@ export const OpenChamberVisualSettings: React.FC<OpenChamberVisualSettingsProps>
     const setDiffLayoutPreference = useUIStore(state => state.setDiffLayoutPreference);
     const diffViewMode = useUIStore(state => state.diffViewMode);
     const setDiffViewMode = useUIStore(state => state.setDiffViewMode);
+    const autoOpenDiff = useUIStore(state => state.autoOpenDiff);
+    const setAutoOpenDiff = useUIStore(state => state.setAutoOpenDiff);
     const queueModeEnabled = useMessageQueueStore(state => state.queueModeEnabled);
     const setQueueMode = useMessageQueueStore(state => state.setQueueMode);
     const {
@@ -681,6 +683,25 @@ export const OpenChamberVisualSettings: React.FC<OpenChamberVisualSettingsProps>
                         {queueModeEnabled 
                             ? `Enter queues messages, ${getModifierLabel()}+Enter sends immediately.` 
                             : `Enter sends immediately, ${getModifierLabel()}+Enter queues messages.`}
+                    </p>
+                </div>
+            )}
+
+            {shouldShow('autoOpenDiff') && isVSCodeRuntime() && (
+                <div className="space-y-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            className="h-3.5 w-3.5 accent-primary"
+                            checked={autoOpenDiff}
+                            onChange={(event) => setAutoOpenDiff(event.target.checked)}
+                        />
+                        <span className="typography-ui-header font-semibold text-foreground">
+                            Auto-open diff on file edit
+                        </span>
+                    </label>
+                    <p className="typography-meta text-muted-foreground pl-5">
+                        Automatically open VS Code diff view when AI edits a file.
                     </p>
                 </div>
             )}
