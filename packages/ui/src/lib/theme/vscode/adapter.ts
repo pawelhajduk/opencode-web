@@ -21,6 +21,9 @@ export type VSCodeThemeColorToken =
   | 'diffEditor.insertedTextBorder'
   | 'diffEditor.insertedLineBackground'
   | 'diffEditor.removedTextBackground'
+  | 'diffEditor.removedTextBorder'
+  | 'diffEditor.removedLineBackground'
+  | 'diffEditor.removedTextBackground'
   | 'diffEditor.removedLineBackground'
   | 'gitDecoration.addedResourceForeground'
   | 'gitDecoration.deletedResourceForeground'
@@ -132,6 +135,9 @@ const VARIABLE_MAP: Record<VSCodeThemeColorToken, string> = {
   'diffEditor.insertedTextBorder': '--vscode-diffEditor-insertedTextBorder',
   'diffEditor.insertedLineBackground': '--vscode-diffEditor-insertedLineBackground',
   'diffEditor.removedTextBackground': '--vscode-diffEditor-removedTextBackground',
+  'diffEditor.removedLineBackground': '--vscode-diffEditor-removedLineBackground',
+  'diffEditor.removedTextBackground': '--vscode-diffEditor-removedTextBackground',
+  'diffEditor.removedTextBorder': '--vscode-diffEditor-removedTextBorder',
   'diffEditor.removedLineBackground': '--vscode-diffEditor-removedLineBackground',
   'gitDecoration.addedResourceForeground': '--vscode-gitDecoration-addedResourceForeground',
   'gitDecoration.deletedResourceForeground': '--vscode-gitDecoration-deletedResourceForeground',
@@ -452,6 +458,15 @@ export const buildVSCodeThemeFromPalette = (palette: VSCodeThemePalette): Theme 
   // User messages: same as chat input (subtle surface)
   const userMessageBg = subtle;
   
+  // Use VS Code's native diff editor colors for tool output diffs
+  // These match what the user sees in the editor's diff view
+  const diffInsertedBg = palette.colors['diffEditor.insertedTextBackground']
+    ?? palette.colors['diffEditor.insertedLineBackground']
+    ?? successBg;
+  const diffRemovedBg = palette.colors['diffEditor.removedTextBackground']
+    ?? palette.colors['diffEditor.removedLineBackground']
+    ?? applyAlpha(read('editorError.foreground', base.colors.status.error), palette.kind === 'light' ? 0.12 : 0.16);
+
   return {
     ...base,
     metadata: {
