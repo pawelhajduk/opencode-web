@@ -12,6 +12,8 @@ import { useContextStore } from '@/stores/contextStore';
 import { useDeviceInfo } from '@/lib/device';
 import { useThemeSystem } from '@/contexts/useThemeSystem';
 import { generateSyntaxTheme } from '@/lib/theme/syntaxThemeGenerator';
+import { generateVSCodeSyntaxTheme } from '@/lib/theme/vscodeSyntaxThemeGenerator';
+import { isVSCodeRuntime } from '@/lib/desktop';
 import { cn } from '@/lib/utils';
 
 import type { AnimationHandlers, ContentChangeReason } from '@/hooks/useChatScrollManager';
@@ -488,12 +490,39 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         return false;
     }, [themeVariant]);
 
+    const [vscodeThemeVersion, setVscodeThemeVersion] = React.useState(0);
+
+    // Listen for VSCode theme updates
+    React.useEffect(() => {
+        if (!isVSCodeRuntime() || typeof window === 'undefined') return;
+
+        const handler = () => {
+            // Force re-computation when VSCode theme changes
+            setVscodeThemeVersion((v) => v + 1);
+        };
+
+        window.addEventListener('openchamber:vscode-shiki-themes', handler as EventListener);
+        return () => window.removeEventListener('openchamber:vscode-shiki-themes', handler as EventListener);
+    }, []);
+
     const syntaxTheme = React.useMemo(() => {
+        // Try VSCode theme first (if running in VSCode)
+        if (isVSCodeRuntime() && typeof window !== 'undefined') {
+            const vscodeShikiThemes = window.__OPENCHAMBER_VSCODE_SHIKI_THEMES__;
+            if (vscodeShikiThemes && currentTheme) {
+                const themeData = isDarkTheme ? vscodeShikiThemes.dark : vscodeShikiThemes.light;
+                if (themeData) {
+                    return generateVSCodeSyntaxTheme(themeData, currentTheme);
+                }
+            }
+        }
+
+        // Fallback to base theme generator
         if (currentTheme) {
             return generateSyntaxTheme(currentTheme);
         }
         return isDarkTheme ? defaultCodeDark : defaultCodeLight;
-    }, [currentTheme, isDarkTheme]);
+    }, [currentTheme, isDarkTheme, vscodeThemeVersion]);
 
     const shouldAnimateMessage = React.useMemo(() => {
         if (isUser) return false;
