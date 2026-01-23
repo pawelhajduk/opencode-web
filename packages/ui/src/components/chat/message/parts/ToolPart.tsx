@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { RuntimeAPIContext } from '@/contexts/runtimeAPIContext';
-import { RiArrowDownSLine, RiArrowRightSLine, RiBookLine, RiExternalLinkLine, RiFileEditLine, RiFileList2Line, RiFileSearchLine, RiFileTextLine, RiFolder6Line, RiGitBranchLine, RiGlobalLine, RiListCheck3, RiMenuSearchLine, RiPencilLine, RiSurveyLine, RiTaskLine, RiTerminalBoxLine, RiToolsLine, RiTextWrap, RiText } from '@remixicon/react';
+import { RiArrowDownSLine, RiArrowRightSLine, RiBookLine, RiEyeLine, RiExternalLinkLine, RiFileEditLine, RiFileList2Line, RiFileSearchLine, RiFileTextLine, RiFolder6Line, RiGitBranchLine, RiGlobalLine, RiListCheck3, RiMenuSearchLine, RiPencilLine, RiSurveyLine, RiTaskLine, RiTerminalBoxLine, RiToolsLine, RiTextWrap, RiText } from '@remixicon/react';
 import { cn } from '@/lib/utils';
 import { SimpleMarkdownRenderer } from '../../MarkdownRenderer';
 import { getToolMetadata, getLanguageFromExtension, isImageFile, getImageMimeType } from '@/lib/toolHelpers';
@@ -139,6 +139,37 @@ const parseDiffStats = (metadata?: Record<string, unknown>): { added: number; re
 
     if (added === 0 && removed === 0) return null;
     return { added, removed };
+};
+
+/**
+ * Reconstruct original content from a unified diff.
+ * This extracts removed lines (-) and context lines ( ) to rebuild what the file looked like before the edit.
+ */
+const reconstructOriginalFromDiff = (diff: string): string => {
+    const lines = diff.split('\n');
+    const originalLines: string[] = [];
+    let inHunk = false;
+
+    for (const line of lines) {
+        if (line.startsWith('Index:') || line.startsWith('===') || line.startsWith('---') || line.startsWith('+++')) {
+            continue;
+        }
+
+        if (line.startsWith('@@')) {
+            inHunk = true;
+            continue;
+        }
+
+        if (inHunk) {
+            if (line.startsWith(' ')) {
+                originalLines.push(line.substring(1));
+            } else if (line.startsWith('-')) {
+                originalLines.push(line.substring(1));
+            }
+        }
+    }
+
+    return originalLines.join('\n');
 };
 
 const getRelativePath = (absolutePath: string, currentDirectory: string, isMobile: boolean): string => {
@@ -1324,6 +1355,53 @@ const ToolPart: React.FC<ToolPartProps> = ({ part, isExpanded, onToggle, syntaxT
         }
     };
 
+    const writeInputContent = part.tool === 'write'
+        ? typeof (input as { content?: unknown })?.content === 'string'
+            ? (input as { content?: string }).content
+            : typeof (input as { text?: unknown })?.text === 'string'
+                ? (input as { text?: string }).text
+                : null
+        : null;
+    const diffContent = typeof metadata?.diff === 'string' ? (metadata.diff as string) : null;
+    
+    const isEditTool = part.tool === 'edit' || part.tool === 'multiedit' || part.tool === 'apply_patch';
+    const isWriteTool = part.tool === 'write';
+    const canShowViewDiff = isVSCode && isFinalized && state.status === 'completed' && (
+        (diffContent && isEditTool) || (isWriteTool && writeInputContent)
+    );
+
+    const handleViewDiff = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!runtime?.editor?.openAIDiff) return;
+
+        let filePath: string | undefined;
+        if (isEditTool) {
+            filePath = (input?.filePath || input?.file_path || input?.path || metadata?.filePath || metadata?.file_path || metadata?.path) as string | undefined;
+        } else if (isWriteTool) {
+            filePath = (input?.filePath || input?.file_path || input?.path) as string | undefined;
+        }
+
+        if (!filePath) return;
+
+        const absolutePath = filePath.startsWith('/')
+            ? filePath
+            : (currentDirectory.endsWith('/') ? currentDirectory + filePath : currentDirectory + '/' + filePath);
+
+        if (isEditTool && diffContent) {
+            await runtime.editor.openAIDiff({
+                filePath: absolutePath,
+                diff: diffContent,
+                label: `AI Edit: ${filePath.split('/').pop() || filePath}`,
+            });
+        } else if (isWriteTool) {
+            await runtime.editor.openAIDiff({
+                filePath: absolutePath,
+                originalContent: '',
+                label: `AI Edit: ${filePath.split('/').pop() || filePath}`,
+            });
+        }
+    };
+
     if (!isFinalized && !isTaskTool) {
         return null;
     }
@@ -1383,6 +1461,17 @@ const ToolPart: React.FC<ToolPartProps> = ({ part, isExpanded, onToggle, syntaxT
                             {' '}
                             <span style={{ color: 'var(--status-error)' }}>-{diffStats.removed}</span>
                         </span>
+                    )}
+                    {canShowViewDiff && (
+                        <button
+                            type="button"
+                            className="flex items-center gap-1 px-1.5 py-0.5 rounded text-muted-foreground/70 hover:text-foreground hover:bg-muted/50 transition-colors flex-shrink-0 opacity-0 group-hover/tool:opacity-100"
+                            onClick={handleViewDiff}
+                            title="View diff in VS Code"
+                        >
+                            <RiEyeLine className="h-3 w-3" />
+                            <span className="typography-micro">Diff</span>
+                        </button>
                     )}
                     {typeof effectiveTimeStart === 'number' && (
                         <span className="text-muted-foreground/80 flex-shrink-0">

@@ -4,6 +4,7 @@ import { getThemeKindName } from './theme';
 import type { OpenCodeManager, ConnectionStatus } from './opencode';
 import { getWebviewShikiThemes } from './shikiThemes';
 import { getWebviewHtml } from './webviewHtml';
+import type { DiffContentProvider } from './DiffContentProvider';
 
 type SessionPanelState = {
   panel: vscode.WebviewPanel;
@@ -22,7 +23,8 @@ export class SessionEditorPanelProvider {
   constructor(
     private readonly _context: vscode.ExtensionContext,
     private readonly _extensionUri: vscode.Uri,
-    private readonly _openCodeManager?: OpenCodeManager
+    private readonly _openCodeManager?: OpenCodeManager,
+    private readonly _diffContentProvider?: DiffContentProvider
   ) {}
 
   public createOrShowNewSession(): void {
@@ -105,6 +107,7 @@ export class SessionEditorPanelProvider {
       const response = await handleBridgeMessage(message, {
         manager: this._openCodeManager,
         context: this._context,
+        diffContentProvider: this._diffContentProvider,
       });
       state.panel.webview.postMessage(response);
     }, null, this._context.subscriptions);
