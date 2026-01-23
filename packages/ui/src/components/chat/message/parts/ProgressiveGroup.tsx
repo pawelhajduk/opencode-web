@@ -9,6 +9,7 @@ import ToolPart from './ToolPart';
 import ReasoningPart from './ReasoningPart';
 import JustificationBlock from './JustificationBlock';
 import { FadeInOnReveal } from '../FadeInOnReveal';
+import { isVSCodeRuntime } from '@/lib/desktop';
 
 const MAX_VISIBLE_COLLAPSED = 6;
 
@@ -79,6 +80,8 @@ const ProgressiveGroup: React.FC<ProgressiveGroupProps> = ({
     const [justExpandedFromCollapsed, setJustExpandedFromCollapsed] = React.useState(false);
 
     const [expansionKey, setExpansionKey] = React.useState(0);
+    
+    const isVSCode = React.useMemo(() => isVSCodeRuntime(), []);
 
     // Track which parts have already been shown in collapsed view (for fade-in animation)
     const shownInCollapsedRef = React.useRef<Set<string>>(new Set());
@@ -144,7 +147,8 @@ const ProgressiveGroup: React.FC<ProgressiveGroupProps> = ({
             <div className="my-1">
                 <div
                     className={cn(
-                        'group/tool flex items-center gap-2 pr-2 pl-px pt-0 pb-1.5 rounded-xl',
+                        'group/tool flex items-center gap-2 pr-2 pt-0 pb-1.5 rounded-xl',
+                        isVSCode ? 'pl-0' : 'pl-px',
                         isHeaderInteractive && 'cursor-pointer'
                     )}
                     onClick={isHeaderInteractive ? onToggle : undefined}
@@ -256,6 +260,7 @@ const ProgressiveGroup: React.FC<ProgressiveGroupProps> = ({
                                             onContentChange={onContentChange}
                                             hasPrevTool={connection?.hasPrev ?? false}
                                             hasNextTool={connection?.hasNext ?? false}
+                                            isVSCode={isVSCode}
                                         />
                                     </FadeInOnReveal>
                                 );
