@@ -1384,6 +1384,30 @@ const ToolPart: React.FC<ToolPartProps> = ({ part, isExpanded, onToggle, syntaxT
         }
     };
 
+    const previousStatusRef = React.useRef<string | undefined>(state.status);
+    React.useEffect(() => {
+        const wasNotCompleted = previousStatusRef.current !== 'completed';
+        const isNowCompleted = state.status === 'completed';
+        previousStatusRef.current = state.status;
+
+        if (!isVSCode || !wasNotCompleted || !isNowCompleted) return;
+        if (!isEditTool || !diffContent) return;
+        if (!runtime?.editor?.openAIDiff) return;
+
+        let filePath: string | undefined = (input?.filePath || input?.file_path || input?.path || metadata?.filePath || metadata?.file_path || metadata?.path) as string | undefined;
+        if (!filePath) return;
+
+        const absolutePath = filePath.startsWith('/')
+            ? filePath
+            : (currentDirectory.endsWith('/') ? currentDirectory + filePath : currentDirectory + '/' + filePath);
+
+        runtime.editor.openAIDiff({
+            filePath: absolutePath,
+            diff: diffContent,
+            label: `AI Edit: ${filePath.split('/').pop() || filePath}`,
+        });
+    }, [state.status, isVSCode, isEditTool, diffContent, runtime, input, metadata, currentDirectory]);
+
     if (!isFinalized && !isTaskTool) {
         return null;
     }
@@ -1447,12 +1471,11 @@ const ToolPart: React.FC<ToolPartProps> = ({ part, isExpanded, onToggle, syntaxT
                     {canShowViewDiff && (
                         <button
                             type="button"
-                            className="flex items-center gap-1 px-1.5 py-0.5 rounded text-muted-foreground/70 hover:text-foreground hover:bg-muted/50 transition-colors flex-shrink-0 opacity-0 group-hover/tool:opacity-100"
+                            className="flex items-center p-0.5 rounded text-muted-foreground/70 hover:text-foreground hover:bg-muted/50 transition-colors flex-shrink-0"
                             onClick={handleViewDiff}
                             title="View diff in VS Code"
                         >
-                            <RiEyeLine className="h-3 w-3" />
-                            <span className="typography-micro">Diff</span>
+                            <RiEyeLine className="h-3.5 w-3.5" />
                         </button>
                     )}
                     {typeof effectiveTimeStart === 'number' && (
