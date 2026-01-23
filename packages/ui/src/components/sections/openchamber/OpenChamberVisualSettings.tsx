@@ -686,6 +686,25 @@ export const OpenChamberVisualSettings: React.FC<OpenChamberVisualSettingsProps>
                     </p>
                 </div>
             )}
+
+            {shouldShow('autoOpenDiff') && isVSCodeRuntime() && (
+                <div className="space-y-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            className="h-3.5 w-3.5 accent-primary"
+                            checked={autoOpenDiff}
+                            onChange={(event) => setAutoOpenDiff(event.target.checked)}
+                        />
+                        <span className="typography-ui-header font-semibold text-foreground">
+                            Auto-open diff on file edit
+                        </span>
+                    </label>
+                    <p className="typography-meta text-muted-foreground pl-5">
+                        Automatically open VS Code diff view when AI edits a file.
+                    </p>
+                </div>
+            )}
         </div>
     );
 };

@@ -10,6 +10,7 @@ import { toolDisplayStyles } from '@/lib/typography';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { useDirectoryStore } from '@/stores/useDirectoryStore';
 import { useSessionStore } from '@/stores/useSessionStore';
+import { useUIStore } from '@/stores/useUIStore';
 import { ScrollableOverlay } from '@/components/ui/ScrollableOverlay';
 import type { ContentChangeReason } from '@/hooks/useChatScrollManager';
 
@@ -1246,6 +1247,7 @@ const ToolExpandedContent: React.FC<ToolExpandedContentProps> = React.memo(({
 const ToolPart: React.FC<ToolPartProps> = ({ part, isExpanded, onToggle, syntaxTheme, isMobile, onContentChange, hasPrevTool = false, hasNextTool = false, isVSCode = false }) => {
     const state = part.state;
     const currentDirectory = useDirectoryStore((s) => s.currentDirectory);
+    const autoOpenDiff = useUIStore((s) => s.autoOpenDiff);
 
     const isTaskTool = part.tool.toLowerCase() === 'task';
 
@@ -1419,6 +1421,7 @@ const ToolPart: React.FC<ToolPartProps> = ({ part, isExpanded, onToggle, syntaxT
         const isNowCompleted = state.status === 'completed';
         previousStatusRef.current = state.status;
 
+        if (!autoOpenDiff) return;
         if (!isVSCode || !wasNotCompleted || !isNowCompleted) return;
         if (!isEditTool || !diffContent) return;
         if (!runtime?.editor?.openAIDiff) return;
@@ -1435,7 +1438,7 @@ const ToolPart: React.FC<ToolPartProps> = ({ part, isExpanded, onToggle, syntaxT
             diff: diffContent,
             label: `AI Edit: ${filePath.split('/').pop() || filePath}`,
         });
-    }, [state.status, isVSCode, isEditTool, diffContent, runtime, input, metadata, currentDirectory]);
+    }, [state.status, isVSCode, isEditTool, diffContent, runtime, input, metadata, currentDirectory, autoOpenDiff]);
 
     if (!isFinalized && !isTaskTool) {
         return null;
