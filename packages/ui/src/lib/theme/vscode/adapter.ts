@@ -16,6 +16,9 @@ export type VSCodeThemeColorToken =
   | 'diffEditor.insertedTextBackground'
   | 'diffEditor.insertedTextBorder'
   | 'diffEditor.insertedLineBackground'
+  | 'diffEditor.removedTextBackground'
+  | 'diffEditor.removedTextBorder'
+  | 'diffEditor.removedLineBackground'
   | 'gitDecoration.addedResourceForeground'
   | 'sideBar.background'
   | 'sideBar.foreground'
@@ -85,6 +88,9 @@ const VARIABLE_MAP: Record<VSCodeThemeColorToken, string> = {
   'diffEditor.insertedTextBackground': '--vscode-diffEditor-insertedTextBackground',
   'diffEditor.insertedTextBorder': '--vscode-diffEditor-insertedTextBorder',
   'diffEditor.insertedLineBackground': '--vscode-diffEditor-insertedLineBackground',
+  'diffEditor.removedTextBackground': '--vscode-diffEditor-removedTextBackground',
+  'diffEditor.removedTextBorder': '--vscode-diffEditor-removedTextBorder',
+  'diffEditor.removedLineBackground': '--vscode-diffEditor-removedLineBackground',
   'gitDecoration.addedResourceForeground': '--vscode-gitDecoration-addedResourceForeground',
   'sideBar.background': '--vscode-sideBar-background',
   'sideBar.foreground': '--vscode-sideBar-foreground',
@@ -285,6 +291,15 @@ export const buildVSCodeThemeFromPalette = (palette: VSCodeThemePalette): Theme 
   // Tailwind's `--accent` drives hovered/selected menu items in Radix/shadcn; prefer VS Code list hover/selection.
   const subtle = hoverBg;
 
+  // Use VS Code's native diff editor colors for tool output diffs
+  // These match what the user sees in the editor's diff view
+  const diffInsertedBg = palette.colors['diffEditor.insertedTextBackground']
+    ?? palette.colors['diffEditor.insertedLineBackground']
+    ?? successBg;
+  const diffRemovedBg = palette.colors['diffEditor.removedTextBackground']
+    ?? palette.colors['diffEditor.removedLineBackground']
+    ?? applyAlpha(read('editorError.foreground', base.colors.status.error), palette.kind === 'light' ? 0.12 : 0.16);
+
   return {
     ...base,
     metadata: {
@@ -372,6 +387,15 @@ export const buildVSCodeThemeFromPalette = (palette: VSCodeThemePalette): Theme 
           bg: badgeBg,
           fg: badgeFg,
           border: border,
+        },
+      },
+      tools: {
+        ...(base.colors.tools || {}),
+        edit: {
+          added: success,
+          addedBackground: diffInsertedBg,
+          removed: read('editorError.foreground', base.colors.status.error),
+          removedBackground: diffRemovedBg,
         },
       },
     },
