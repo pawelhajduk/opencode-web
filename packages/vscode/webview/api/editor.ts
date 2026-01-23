@@ -1,6 +1,6 @@
 
 import { sendBridgeMessage } from './bridge';
-import type { EditorAPI } from '@openchamber/ui/lib/api/types';
+import type { EditorAPI, OpenAIDiffParams } from '@openchamber/ui/lib/api/types';
 
 export const createVSCodeEditorAPI = (): EditorAPI => ({
   openFile: async (path: string, line?: number, column?: number) => {
@@ -8,5 +8,8 @@ export const createVSCodeEditorAPI = (): EditorAPI => ({
   },
   openDiff: async (original: string, modified: string, label?: string) => {
     await sendBridgeMessage('editor:openDiff', { original, modified, label });
+  },
+  openAIDiff: async (params: OpenAIDiffParams) => {
+    await sendBridgeMessage('editor:openAIDiff', params);
   },
 });

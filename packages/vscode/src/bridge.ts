@@ -13,6 +13,7 @@ import {
   installSkillsFromRepository as installSkillsFromGit,
   type SkillsCatalogSourceConfig,
 } from './skillsCatalog';
+import { type DiffContentProvider } from './DiffContentProvider';
 import {
   DEFAULT_GITHUB_CLIENT_ID,
   DEFAULT_GITHUB_SCOPES,
@@ -84,6 +85,7 @@ interface FileSearchResult {
 export interface BridgeContext {
   manager?: OpenCodeManager;
   context?: vscode.ExtensionContext;
+  diffContentProvider?: DiffContentProvider;
 }
 
 const SETTINGS_KEY = 'openchamber.settings';
@@ -198,6 +200,95 @@ const persistSettings = async (changes: Record<string, unknown>, ctx?: BridgeCon
 
 const normalizeFsPath = (value: string) => value.replace(/\\/g, '/');
 
+interface DiffHunk {
+  oldStart: number;
+  oldCount: number;
+  newStart: number;
+  newCount: number;
+  lines: Array<{ type: 'context' | 'added' | 'removed'; content: string }>;
+}
+
+const parseDiffHunks = (diff: string): DiffHunk[] => {
+  const lines = diff.split('\n');
+  const hunks: DiffHunk[] = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    if (line.startsWith('@@')) {
+      const match = line.match(/@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/);
+      if (match) {
+        const oldStart = parseInt(match[1], 10);
+        const oldCount = match[2] !== undefined ? parseInt(match[2], 10) : 1;
+        const newStart = parseInt(match[3], 10);
+        const newCount = match[4] !== undefined ? parseInt(match[4], 10) : 1;
+
+        const hunkLines: DiffHunk['lines'] = [];
+        let j = i + 1;
+
+        while (j < lines.length && !lines[j].startsWith('@@') && !lines[j].startsWith('Index:') && !lines[j].startsWith('diff ')) {
+          const contentLine = lines[j];
+          if (contentLine.startsWith('+')) {
+            hunkLines.push({ type: 'added', content: contentLine.substring(1) });
+          } else if (contentLine.startsWith('-')) {
+            hunkLines.push({ type: 'removed', content: contentLine.substring(1) });
+          } else if (contentLine.startsWith(' ') || contentLine === '') {
+            hunkLines.push({ type: 'context', content: contentLine.startsWith(' ') ? contentLine.substring(1) : contentLine });
+          }
+          j++;
+        }
+
+        hunks.push({ oldStart, oldCount, newStart, newCount, lines: hunkLines });
+        i = j;
+        continue;
+      }
+    }
+
+    i++;
+  }
+
+  return hunks;
+};
+
+const applyReverseDiff = (currentContent: string, diff: string): string => {
+  const hunks = parseDiffHunks(diff);
+  if (hunks.length === 0) {
+    return currentContent;
+  }
+
+  const currentLines = currentContent.split('\n');
+  const resultLines: string[] = [];
+  let currentLineIndex = 0;
+
+  for (const hunk of hunks) {
+    const hunkNewStart = hunk.newStart - 1;
+
+    while (currentLineIndex < hunkNewStart && currentLineIndex < currentLines.length) {
+      resultLines.push(currentLines[currentLineIndex]);
+      currentLineIndex++;
+    }
+
+    for (const line of hunk.lines) {
+      if (line.type === 'context') {
+        resultLines.push(line.content);
+        currentLineIndex++;
+      } else if (line.type === 'removed') {
+        resultLines.push(line.content);
+      } else if (line.type === 'added') {
+        currentLineIndex++;
+      }
+    }
+  }
+
+  while (currentLineIndex < currentLines.length) {
+    resultLines.push(currentLines[currentLineIndex]);
+    currentLineIndex++;
+  }
+
+  return resultLines.join('\n');
+};
+
 const execGit = async (args: string[], cwd: string): Promise<{ stdout: string; stderr: string; exitCode: number }> => (
   new Promise((resolve) => {
     const proc = spawn('git', args, {
@@ -289,6 +380,43 @@ const resolveUserPath = (value: string, baseDirectory: string) => {
     return expanded;
   }
   return path.resolve(baseDirectory, expanded);
+};
+
+const LANGUAGE_ID_MAP: Record<string, string> = {
+  '.ts': 'typescript',
+  '.tsx': 'typescriptreact',
+  '.js': 'javascript',
+  '.jsx': 'javascriptreact',
+  '.py': 'python',
+  '.rs': 'rust',
+  '.go': 'go',
+  '.java': 'java',
+  '.c': 'c',
+  '.cpp': 'cpp',
+  '.h': 'c',
+  '.hpp': 'cpp',
+  '.css': 'css',
+  '.scss': 'scss',
+  '.json': 'json',
+  '.md': 'markdown',
+  '.yaml': 'yaml',
+  '.yml': 'yaml',
+  '.html': 'html',
+  '.xml': 'xml',
+  '.sh': 'shellscript',
+  '.bash': 'shellscript',
+  '.sql': 'sql',
+  '.rb': 'ruby',
+  '.php': 'php',
+  '.swift': 'swift',
+  '.kt': 'kotlin',
+  '.vue': 'vue',
+  '.svelte': 'svelte',
+};
+
+const getLanguageIdFromPath = (filePath: string): string | undefined => {
+  const ext = path.extname(filePath).toLowerCase();
+  return LANGUAGE_ID_MAP[ext];
 };
 
 const listDirectoryEntries = async (dirPath: string) => {
@@ -1858,6 +1986,86 @@ export async function handleBridgeMessage(message: BridgeRequest, ctx?: BridgeCo
         } catch (error) {
            const errorMessage = error instanceof Error ? error.message : String(error);
            return { id, type, success: false, error: errorMessage };
+        }
+      }
+
+      case 'editor:openAIDiff': {
+        const {
+          filePath: rawFilePath,
+          originalContent,
+          modifiedContent,
+          diff,
+          label,
+          languageId,
+        } = payload as {
+          filePath: string;
+          originalContent?: string;
+          modifiedContent?: string;
+          diff?: string;
+          label?: string;
+          languageId?: string;
+        };
+
+        if (!rawFilePath) {
+          return { id, type, success: false, error: 'filePath is required' };
+        }
+
+        if (!ctx?.diffContentProvider) {
+          return { id, type, success: false, error: 'DiffContentProvider not available' };
+        }
+
+        try {
+          const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '';
+          const absolutePath = path.isAbsolute(rawFilePath)
+            ? rawFilePath
+            : path.join(workspaceRoot, rawFilePath);
+          const relativePath = path.relative(workspaceRoot, absolutePath);
+
+          const detectedLanguageId = languageId || getLanguageIdFromPath(rawFilePath);
+
+          let computedOriginalContent = originalContent ?? '';
+
+          if (diff && !originalContent) {
+            const fileUri = vscode.Uri.file(absolutePath);
+            const currentContentBytes = await vscode.workspace.fs.readFile(fileUri);
+            const currentContent = new TextDecoder().decode(currentContentBytes);
+            computedOriginalContent = applyReverseDiff(currentContent, diff);
+          }
+
+          const originalUri = ctx.diffContentProvider.registerContent(
+            relativePath,
+            computedOriginalContent,
+            'original',
+            detectedLanguageId
+          );
+
+          let modifiedUri: vscode.Uri;
+          if (modifiedContent !== undefined) {
+            modifiedUri = ctx.diffContentProvider.registerContent(
+              relativePath,
+              modifiedContent,
+              'modified',
+              detectedLanguageId
+            );
+          } else {
+            modifiedUri = vscode.Uri.file(absolutePath);
+          }
+
+          const fileName = path.basename(rawFilePath);
+          const title = label || `${fileName} (AI Changes)`;
+
+          await vscode.commands.executeCommand(
+            'vscode.diff',
+            originalUri,
+            modifiedUri,
+            title,
+            { preview: false }
+          );
+
+          return { id, type, success: true, data: { opened: true } };
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          return { id, type, success: false, error: errorMessage };
         }
       }
 

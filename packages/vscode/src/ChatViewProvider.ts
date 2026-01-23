@@ -4,6 +4,7 @@ import { getThemeKindName } from './theme';
 import type { OpenCodeManager, ConnectionStatus } from './opencode';
 import { getWebviewShikiThemes } from './shikiThemes';
 import { getWebviewHtml } from './webviewHtml';
+import type { DiffContentProvider } from './DiffContentProvider';
 
 export class ChatViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'openchamber.chatView';
@@ -24,7 +25,8 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
   constructor(
     private readonly _context: vscode.ExtensionContext,
     private readonly _extensionUri: vscode.Uri,
-    private readonly _openCodeManager?: OpenCodeManager
+    private readonly _openCodeManager?: OpenCodeManager,
+    private readonly _diffContentProvider?: DiffContentProvider
   ) {}
 
   public resolveWebviewView(
@@ -67,6 +69,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       const response = await handleBridgeMessage(message, {
         manager: this._openCodeManager,
         context: this._context,
+        diffContentProvider: this._diffContentProvider,
       });
       webviewView.webview.postMessage(response);
     });

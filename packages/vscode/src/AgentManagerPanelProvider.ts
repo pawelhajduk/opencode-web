@@ -4,6 +4,7 @@ import { getThemeKindName } from './theme';
 import type { OpenCodeManager, ConnectionStatus } from './opencode';
 import { getWebviewShikiThemes } from './shikiThemes';
 import { getWebviewHtml } from './webviewHtml';
+import type { DiffContentProvider } from './DiffContentProvider';
 
 export class AgentManagerPanelProvider {
   public static readonly viewType = 'openchamber.agentManager';
@@ -20,7 +21,8 @@ export class AgentManagerPanelProvider {
   constructor(
     private readonly _context: vscode.ExtensionContext,
     private readonly _extensionUri: vscode.Uri,
-    private readonly _openCodeManager?: OpenCodeManager
+    private readonly _openCodeManager?: OpenCodeManager,
+    private readonly _diffContentProvider?: DiffContentProvider
   ) {}
 
   public createOrShow(): void {
@@ -95,6 +97,7 @@ export class AgentManagerPanelProvider {
       const response = await handleBridgeMessage(message, {
         manager: this._openCodeManager,
         context: this._context,
+        diffContentProvider: this._diffContentProvider,
       });
       this._panel?.webview.postMessage(response);
     }, null, this._context.subscriptions);
