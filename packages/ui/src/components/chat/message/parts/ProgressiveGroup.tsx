@@ -9,6 +9,7 @@ import ToolPart from './ToolPart';
 import ReasoningPart from './ReasoningPart';
 import JustificationBlock from './JustificationBlock';
 import { FadeInOnReveal } from '../FadeInOnReveal';
+import { isVSCodeRuntime } from '@/lib/desktop';
 
 const MAX_VISIBLE_COLLAPSED = 6;
 
@@ -79,6 +80,8 @@ const ProgressiveGroup: React.FC<ProgressiveGroupProps> = ({
     const [justExpandedFromCollapsed, setJustExpandedFromCollapsed] = React.useState(false);
 
     const [expansionKey, setExpansionKey] = React.useState(0);
+    
+    const isVSCode = React.useMemo(() => isVSCodeRuntime(), []);
 
     React.useEffect(() => {
         if (previousExpandedRef.current === isExpanded) return;
@@ -139,7 +142,8 @@ const ProgressiveGroup: React.FC<ProgressiveGroupProps> = ({
             <div className="my-1">
                 <div
                     className={cn(
-                        'group/tool flex items-center gap-2 pr-2 pl-px pt-0 pb-1.5 rounded-xl',
+                        'group/tool flex items-center gap-2 pr-2 pt-0 pb-1.5 rounded-xl',
+                        isVSCode ? 'pl-0' : 'pl-px',
                         isHeaderInteractive && 'cursor-pointer'
                     )}
                     onClick={isHeaderInteractive ? onToggle : undefined}
@@ -196,8 +200,10 @@ const ProgressiveGroup: React.FC<ProgressiveGroupProps> = ({
 
                 <div
                     className={cn(
-                        'relative pr-2 pb-1 pt-1 pl-[1.4375rem]',
-                        'before:absolute before:left-[0.4375rem] before:w-px before:bg-border/80 before:content-[""]',
+                        'relative pr-2 pb-1 pt-1',
+                        isVSCode ? 'pl-2' : 'pl-[1.4375rem]',
+                        'before:absolute before:w-px before:bg-border/80 before:content-[""]',
+                        isVSCode ? 'before:left-1' : 'before:left-[0.4375rem]',
                         'before:top-[-0.25rem] before:bottom-0'
                     )}
                 >
@@ -235,6 +241,7 @@ const ProgressiveGroup: React.FC<ProgressiveGroupProps> = ({
                                             onContentChange={onContentChange}
                                             hasPrevTool={connection?.hasPrev ?? false}
                                             hasNextTool={connection?.hasNext ?? false}
+                                            isVSCode={isVSCode}
                                         />
                                     </FadeInOnReveal>
                                 );

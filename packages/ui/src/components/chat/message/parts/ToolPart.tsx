@@ -36,6 +36,7 @@ interface ToolPartProps {
     onContentChange?: (reason?: ContentChangeReason) => void;
     hasPrevTool?: boolean;
     hasNextTool?: boolean;
+    isVSCode?: boolean;
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -602,6 +603,7 @@ interface WriteInputPreviewProps {
 }
 
 const WriteInputPreview: React.FC<WriteInputPreviewProps> = ({ content, syntaxTheme, filePath, displayPath }) => {
+    const [wrapLines, setWrapLines] = React.useState(false);
     const lines = content.split('\n');
     const language = getLanguageFromExtension(filePath ?? '') || detectLanguageFromOutput(content, 'write', filePath ? { filePath } : undefined);
 
@@ -609,7 +611,17 @@ const WriteInputPreview: React.FC<WriteInputPreviewProps> = ({ content, syntaxTh
     const headerLineLabel = lineCount === 1 ? 'line 1' : `lines 1-${lineCount}`;
 
     return (
-        <div className="w-full min-w-0">
+        <div className="w-full min-w-0 relative">
+            <div className="absolute top-1 right-1 z-10">
+                <button
+                    type="button"
+                    onClick={() => setWrapLines(!wrapLines)}
+                    className="p-1.5 rounded-lg bg-muted/80 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                    title={wrapLines ? 'Disable line wrap' : 'Enable line wrap'}
+                >
+                    {wrapLines ? <RiText className="h-3.5 w-3.5" /> : <RiTextWrap className="h-3.5 w-3.5" />}
+                </button>
+            </div>
             <div className="bg-muted/20 px-2 py-1 typography-meta font-medium text-muted-foreground border border-border/10 rounded-lg mb-1">
                 {`${displayPath} (${headerLineLabel})`}
             </div>
@@ -619,13 +631,13 @@ const WriteInputPreview: React.FC<WriteInputPreviewProps> = ({ content, syntaxTh
                         <span className="text-muted-foreground/60 w-8 flex-shrink-0 text-right pr-2 self-start select-none">
                             {lineIdx + 1}
                         </span>
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0" style={wrapLines ? {} : { overflow: 'hidden' }}>
                             <SyntaxHighlighter
                                 style={syntaxTheme}
                                 language={language || 'text'}
                                 PreTag="div"
-                                wrapLines
-                                wrapLongLines
+                                wrapLines={wrapLines}
+                                wrapLongLines={wrapLines}
                                 customStyle={{
                                     margin: 0,
                                     padding: 0,
@@ -634,9 +646,9 @@ const WriteInputPreview: React.FC<WriteInputPreviewProps> = ({ content, syntaxTh
                                     backgroundColor: 'transparent',
                                     borderRadius: 0,
                                     overflow: 'visible',
-                                    whiteSpace: 'pre-wrap',
-                                    wordBreak: 'break-all',
-                                    overflowWrap: 'anywhere',
+                                    whiteSpace: wrapLines ? 'pre-wrap' : 'pre',
+                                    wordBreak: wrapLines ? 'break-all' : 'normal',
+                                    overflowWrap: wrapLines ? 'anywhere' : 'normal',
                                 }}
                                 codeTagProps={{
                                     style: { background: 'transparent', backgroundColor: 'transparent', fontSize: 'inherit' },
@@ -700,6 +712,7 @@ interface ToolExpandedContentProps {
     currentDirectory: string;
     hasPrevTool: boolean;
     hasNextTool: boolean;
+    isVSCode?: boolean;
 }
 
 const ToolExpandedContent: React.FC<ToolExpandedContentProps> = ({
@@ -710,6 +723,7 @@ const ToolExpandedContent: React.FC<ToolExpandedContentProps> = ({
     currentDirectory,
     hasPrevTool,
     hasNextTool,
+    isVSCode = false,
 }) => {
     const stateWithData = state as ToolStateWithMetadata;
     const metadata = stateWithData.metadata;
@@ -907,9 +921,13 @@ const ToolExpandedContent: React.FC<ToolExpandedContentProps> = ({
         }
 
         if ((part.tool === 'edit' || part.tool === 'multiedit' || part.tool === 'apply_patch') && diffContent) {
-            return renderScrollableBlock(
-                <DiffPreview diff={diffContent} syntaxTheme={syntaxTheme} input={input} />,
-                { className: 'p-1' }
+            return (
+                <div className={cn(isVSCode && '-mx-2')}>
+                    {renderScrollableBlock(
+                        <DiffPreview diff={diffContent} syntaxTheme={syntaxTheme} input={input} />,
+                        { className: 'p-1' }
+                    )}
+                </div>
             );
         }
 
@@ -922,12 +940,13 @@ const ToolExpandedContent: React.FC<ToolExpandedContentProps> = ({
                 const isInfoMessage = (line: string) => line.trim().startsWith('(');
 
                 return (
-                    <CollapsibleCodeBlock
-                        content={formattedOutput}
-                        collapsedLines={5}
-                        wrapLines={false}
-                        showWrapToggle={true}
-                        renderContent={(displayContent, wrapLines) => {
+                    <div className={cn(isVSCode && '-mx-2')}>
+                        <CollapsibleCodeBlock
+                            content={formattedOutput}
+                            collapsedLines={5}
+                            wrapLines={false}
+                            showWrapToggle={true}
+                            renderContent={(displayContent, wrapLines) => {
                             const displayLines = displayContent.split('\n');
                             return (
                                 <div className="typography-code w-full min-w-0 space-y-1">
@@ -979,6 +998,7 @@ const ToolExpandedContent: React.FC<ToolExpandedContentProps> = ({
                             );
                         }}
                     />
+                    </div>
                 );
             }
 
@@ -1055,8 +1075,10 @@ const ToolExpandedContent: React.FC<ToolExpandedContentProps> = ({
     return (
         <div
             className={cn(
-                'relative pr-2 pb-2 pt-2 space-y-2 pl-[1.4375rem]',
-                'before:absolute before:left-[0.4375rem] before:w-px before:bg-border/80 before:content-[""]',
+                'relative pr-2 pb-2 pt-2 space-y-2',
+                isVSCode ? 'pl-2' : 'pl-[1.4375rem]',
+                'before:absolute before:w-px before:bg-border/80 before:content-[""]',
+                isVSCode ? 'before:left-1' : 'before:left-[0.4375rem]',
                 hasPrevTool ? 'before:top-[-0.45rem]' : 'before:top-[-0.25rem]',
                 hasNextTool ? 'before:bottom-[-0.6rem]' : 'before:bottom-0'
             )}
@@ -1066,7 +1088,7 @@ const ToolExpandedContent: React.FC<ToolExpandedContentProps> = ({
             ) : (
                 <>
                     {shouldShowWriteInputPreview && isWriteImageFile ? (
-                        <div className="my-1">
+                        <div className={cn('my-1', isVSCode && '-mx-2')}>
                             {renderScrollableBlock(
                                 <ImagePreview
                                     content={writeInputContent as string}
@@ -1076,7 +1098,7 @@ const ToolExpandedContent: React.FC<ToolExpandedContentProps> = ({
                             )}
                         </div>
                     ) : shouldShowWriteInputPreview ? (
-                        <div className="my-1">
+                        <div className={cn('my-1', isVSCode && '-mx-2')}>
                             {renderScrollableBlock(
                                 <WriteInputPreview
                                     content={writeInputContent as string}
@@ -1165,7 +1187,7 @@ const ToolExpandedContent: React.FC<ToolExpandedContentProps> = ({
     );
 };
 
-const ToolPart: React.FC<ToolPartProps> = ({ part, isExpanded, onToggle, syntaxTheme, isMobile, onContentChange, hasPrevTool = false, hasNextTool = false }) => {
+const ToolPart: React.FC<ToolPartProps> = ({ part, isExpanded, onToggle, syntaxTheme, isMobile, onContentChange, hasPrevTool = false, hasNextTool = false, isVSCode = false }) => {
     const state = part.state;
     const currentDirectory = useDirectoryStore((s) => s.currentDirectory);
 
@@ -1377,6 +1399,7 @@ const ToolPart: React.FC<ToolPartProps> = ({ part, isExpanded, onToggle, syntaxT
                     currentDirectory={currentDirectory}
                     hasPrevTool={hasPrevTool}
                     hasNextTool={hasNextTool}
+                    isVSCode={isVSCode}
                 />
             ) : null}
         </div>
