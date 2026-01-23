@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { getThemeKindName } from './theme';
 import type { ConnectionStatus } from './opencode';
 
-export type PanelType = 'chat' | 'agentManager';
+export type PanelType = 'chat' | 'agentManager' | 'settings';
 
 export interface WebviewHtmlOptions {
   webview: vscode.Webview;
