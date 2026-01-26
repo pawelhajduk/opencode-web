@@ -310,6 +310,24 @@ svg.animate-spin {
 }
 
 :root {
+  /* Default status colors (light mode - Vercel) */
+  --status-error: #c62128;
+  --status-error-foreground: #ffffff;
+  --status-error-background: #c6212820;
+  --status-error-border: #c6212850;
+  --status-warning: #9e5200;
+  --status-warning-foreground: #ffffff;
+  --status-warning-background: #9e520020;
+  --status-warning-border: #9e520050;
+  --status-success: #397c3b;
+  --status-success-foreground: #ffffff;
+  --status-success-background: #397c3b20;
+  --status-success-border: #397c3b50;
+  --status-info: #005ee9;
+  --status-info-foreground: #ffffff;
+  --status-info-background: #005ee920;
+  --status-info-border: #005ee950;
+
   /* Default Light Theme */
   --background: oklch(0.97 0.02 85); /* Warm sand background */
   --foreground: oklch(0.25 0.02 40); /* Dark warm text */
@@ -348,6 +366,24 @@ svg.animate-spin {
 }
 
 .dark {
+  /* Default status colors (dark mode - Vercel) */
+  --status-error: #f05b8d;
+  --status-error-foreground: #000000;
+  --status-error-background: #f5646420;
+  --status-error-border: #f5646450;
+  --status-warning: #f99902;
+  --status-warning-foreground: #000000;
+  --status-warning-background: #f9990220;
+  --status-warning-border: #f9990250;
+  --status-success: #58c760;
+  --status-success-foreground: #000000;
+  --status-success-background: #58c76020;
+  --status-success-border: #58c76050;
+  --status-info: #62a6ff;
+  --status-info-foreground: #000000;
+  --status-info-background: #62a6ff20;
+  --status-info-border: #62a6ff50;
+
   /* Default Dark Theme - using OKLCH color space */
   --background: oklch(0.16 0.01 30); /* #151313 */
   --foreground: oklch(0.85 0.02 90); /* #cdccc3 */
