@@ -618,7 +618,7 @@ interface WriteInputPreviewProps {
     displayPath: string;
 }
 
-const WriteInputPreview: React.FC<WriteInputPreviewProps> = ({ content, syntaxTheme, filePath, displayPath }) => {
+const WriteInputPreview: React.FC<WriteInputPreviewProps> = React.memo(({ content, syntaxTheme, filePath, displayPath }) => {
     const [wrapLines, setWrapLines] = React.useState(false);
     const lines = content.split('\n');
     const language = getLanguageFromExtension(filePath ?? '') || detectLanguageFromOutput(content, 'write', filePath ? { filePath } : undefined);
@@ -1247,7 +1247,7 @@ const ToolExpandedContent: React.FC<ToolExpandedContentProps> = React.memo(({
             )}
         </div>
     );
-};
+});
 
 const ToolPart: React.FC<ToolPartProps> = ({ part, isExpanded, onToggle, syntaxTheme, isMobile, onContentChange, hasPrevTool = false, hasNextTool = false, isVSCode = false }) => {
     const state = part.state;

@@ -75,7 +75,7 @@ const DIFF_VIEW_MODE_OPTIONS: Option<'single' | 'stacked'>[] = [
     },
 ];
 
-export type VisibleSetting = 'theme' | 'colorScheme' | 'fonts' | 'fontSize' | 'spacing' | 'cornerRadius' | 'inputBarOffset' | 'toolOutput' | 'diffLayout' | 'dotfiles' | 'reasoning' | 'queueMode' | 'autoOpenDiff';
+export type VisibleSetting = 'theme' | 'colorScheme' | 'fonts' | 'fontSize' | 'spacing' | 'cornerRadius' | 'inputBarOffset' | 'toolOutput' | 'diffLayout' | 'dotfiles' | 'reasoning' | 'textJustificationActivity' | 'queueMode' | 'autoOpenDiff';
 
 const COLOR_SCHEME_OPTIONS: Array<{ id: string; label: string; lightThemeId: string; darkThemeId: string }> = [
     { id: 'vercel', label: 'Vercel', lightThemeId: 'vercel-light', darkThemeId: 'vercel-dark' },
