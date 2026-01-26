@@ -6,6 +6,9 @@ import { useSessionStore } from '@/stores/useSessionStore';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { useThemeSystem } from '@/contexts/useThemeSystem';
 import { generateSyntaxTheme } from '@/lib/theme/syntaxThemeGenerator';
+import { generateVSCodeSyntaxTheme } from '@/lib/theme/vscodeSyntaxThemeGenerator';
+import { isVSCodeRuntime } from '@/lib/desktop';
+import { defaultCodeDark, defaultCodeLight } from '@/lib/codeTheme';
 import { ScrollableOverlay } from '@/components/ui/ScrollableOverlay';
 import { DiffPreview, WritePreview } from './DiffPreview';
 
@@ -64,7 +67,47 @@ export const PermissionCard: React.FC<PermissionCardProps> = ({
   const [hasResponded, setHasResponded] = React.useState(false);
   const { respondToPermission } = useSessionStore();
   const { currentTheme } = useThemeSystem();
-  const syntaxTheme = React.useMemo(() => generateSyntaxTheme(currentTheme), [currentTheme]);
+
+  const themeVariant = currentTheme?.metadata.variant;
+  const isDarkTheme = React.useMemo(() => {
+    if (themeVariant) {
+      return themeVariant === 'dark';
+    }
+    if (typeof document !== 'undefined') {
+      return document.documentElement.classList.contains('dark');
+    }
+    return false;
+  }, [themeVariant]);
+
+  const [vscodeThemeVersion, setVscodeThemeVersion] = React.useState(0);
+
+  React.useEffect(() => {
+    if (!isVSCodeRuntime() || typeof window === 'undefined') return;
+
+    const handler = () => {
+      setVscodeThemeVersion((v) => v + 1);
+    };
+
+    window.addEventListener('openchamber:vscode-syntax-themes', handler as EventListener);
+    return () => window.removeEventListener('openchamber:vscode-syntax-themes', handler as EventListener);
+  }, []);
+
+  const syntaxTheme = React.useMemo(() => {
+    if (isVSCodeRuntime() && typeof window !== 'undefined') {
+      const vscodeSyntaxThemes = window.__OPENCHAMBER_VSCODE_SYNTAX_THEMES__;
+      if (vscodeSyntaxThemes && currentTheme) {
+        const themeData = isDarkTheme ? vscodeSyntaxThemes.dark : vscodeSyntaxThemes.light;
+        if (themeData) {
+          return generateVSCodeSyntaxTheme(themeData, currentTheme);
+        }
+      }
+    }
+
+    if (currentTheme) {
+      return generateSyntaxTheme(currentTheme);
+    }
+    return isDarkTheme ? defaultCodeDark : defaultCodeLight;
+  }, [currentTheme, isDarkTheme, vscodeThemeVersion]);
 
   const handleResponse = async (response: PermissionResponse) => {
     setIsResponding(true);

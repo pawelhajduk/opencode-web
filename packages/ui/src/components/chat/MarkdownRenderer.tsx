@@ -463,7 +463,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
   isStreaming = false,
   variant = 'assistant',
 }) => {
-  const shikiThemes = useMarkdownShikiThemes();
+  const syntaxThemes = useMarkdownSyntaxThemes();
   const componentKey = React.useMemo(() => {
     const signature = part?.id ? `part-${part.id}` : `message-${messageId}`;
     return `markdown-${signature}`;
@@ -477,7 +477,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
     <div className={cn('break-words', className)}>
       <Streamdown
         mode={isStreaming ? 'streaming' : 'static'}
-        shikiTheme={shikiThemes}
+        shikiTheme={syntaxThemes}
         className={streamdownClassName}
         controls={{ code: false, table: false }}
         components={streamdownComponents}
@@ -503,7 +503,7 @@ export const SimpleMarkdownRenderer: React.FC<{
   className?: string;
   variant?: MarkdownVariant;
 }> = ({ content, className, variant = 'assistant' }) => {
-  const shikiThemes = useMarkdownShikiThemes();
+  const syntaxThemes = useMarkdownSyntaxThemes();
 
   const streamdownClassName = variant === 'tool'
     ? 'streamdown-content streamdown-tool'
@@ -513,7 +513,7 @@ export const SimpleMarkdownRenderer: React.FC<{
     <div className={cn('break-words', className)}>
       <Streamdown
         mode="static"
-        shikiTheme={shikiThemes}
+        shikiTheme={syntaxThemes}
         className={streamdownClassName}
         controls={{ code: false, table: false }}
         components={streamdownComponents}
