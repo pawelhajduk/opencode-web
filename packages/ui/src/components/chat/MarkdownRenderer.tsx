@@ -5,8 +5,9 @@ import type { Part } from '@opencode-ai/sdk/v2';
 import { cn } from '@/lib/utils';
 import { RiFileCopyLine, RiCheckLine, RiDownloadLine } from '@remixicon/react';
 
-import { streamdownThemes } from '@/lib/diffThemes';
+import { getDiffThemeForUITheme, getDiffThemeByName, type DiffThemeName } from '@/lib/diffThemes';
 import { isVSCodeRuntime } from '@/lib/desktop';
+import { useOptionalThemeSystem } from '@/contexts/useThemeSystem';
 
 const withStableStringId = <T extends object>(value: T, id: string): T => {
   const existingPrimitive = (value as Record<symbol, unknown>)[Symbol.toPrimitive];
@@ -43,21 +44,33 @@ const withStableStringId = <T extends object>(value: T, id: string): T => {
   return value;
 };
 
-const getMarkdownShikiThemes = (): readonly [string | object, string | object] => {
+const getMarkdownSyntaxThemesForUITheme = (
+  uiThemeId: string | undefined,
+): readonly [object, object] => {
+  const lightThemeName = getDiffThemeForUITheme(uiThemeId, false) as DiffThemeName;
+  const darkThemeName = getDiffThemeForUITheme(uiThemeId, true) as DiffThemeName;
+  
+  const lightTheme = getDiffThemeByName(lightThemeName);
+  const darkTheme = getDiffThemeByName(darkThemeName);
+  
+  return [lightTheme, darkTheme] as const;
+};
+
+const getVSCodeSyntaxThemes = (): readonly [object, object] | null => {
   if (!isVSCodeRuntime() || typeof window === 'undefined') {
-    return streamdownThemes;
+    return null;
   }
 
-  const provided = window.__OPENCHAMBER_VSCODE_SHIKI_THEMES__;
+  const provided = window.__OPENCHAMBER_VSCODE_SYNTAX_THEMES__;
   if (!provided) {
-    return streamdownThemes;
+    return null;
   }
 
   const hasLight = provided.light && typeof provided.light === 'object';
   const hasDark = provided.dark && typeof provided.dark === 'object';
 
   if (!hasLight && !hasDark) {
-    return streamdownThemes;
+    return null;
   }
 
   const effectiveLight = provided.light ?? provided.dark;
@@ -65,33 +78,44 @@ const getMarkdownShikiThemes = (): readonly [string | object, string | object] =
 
   const light = withStableStringId(
     { ...(effectiveLight as Record<string, unknown>) },
-    `vscode-shiki-light:${String((effectiveLight as { name?: unknown })?.name ?? 'theme')}`,
+    `vscode-syntax-light:${String((effectiveLight as { name?: unknown })?.name ?? 'theme')}`,
   );
   const dark = withStableStringId(
     { ...(effectiveDark as Record<string, unknown>) },
-    `vscode-shiki-dark:${String((effectiveDark as { name?: unknown })?.name ?? 'theme')}`,
+    `vscode-syntax-dark:${String((effectiveDark as { name?: unknown })?.name ?? 'theme')}`,
   );
   return [light, dark] as const;
 };
 
-const useMarkdownShikiThemes = (): readonly [string | object, string | object] => {
-  const [themes, setThemes] = React.useState(getMarkdownShikiThemes);
+const useMarkdownSyntaxThemes = (): readonly [string | object, string | object] => {
+  const themeSystem = useOptionalThemeSystem();
+  const uiThemeId = themeSystem?.currentTheme?.metadata?.id;
+  
+  const [vscodeThemeVersion, setVscodeThemeVersion] = React.useState(0);
 
   React.useEffect(() => {
     if (!isVSCodeRuntime() || typeof window === 'undefined') return;
 
-    const handler = (event: Event) => {
-      // Rely on the canonical `window.__OPENCHAMBER_VSCODE_SHIKI_THEMES__` that the webview updates
-      // before dispatching this event, so we always apply stable cache keys and avoid stale token reuse.
-      void event;
-      setThemes(getMarkdownShikiThemes());
+    const handler = () => {
+      setVscodeThemeVersion((v) => v + 1);
     };
 
-    window.addEventListener('openchamber:vscode-shiki-themes', handler as EventListener);
-    return () => window.removeEventListener('openchamber:vscode-shiki-themes', handler as EventListener);
+    window.addEventListener('openchamber:vscode-syntax-themes', handler as EventListener);
+    return () => window.removeEventListener('openchamber:vscode-syntax-themes', handler as EventListener);
   }, []);
 
-  return themes;
+  return React.useMemo(() => {
+    void vscodeThemeVersion;
+    
+    if (isVSCodeRuntime()) {
+      const vscodeThemes = getVSCodeSyntaxThemes();
+      if (vscodeThemes) {
+        return vscodeThemes;
+      }
+    }
+    
+    return getMarkdownSyntaxThemesForUITheme(uiThemeId);
+  }, [uiThemeId, vscodeThemeVersion]);
 };
 
 // Table utility functions
@@ -441,7 +465,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
   isStreaming = false,
   variant = 'assistant',
 }) => {
-  const shikiThemes = useMarkdownShikiThemes();
+  const syntaxThemes = useMarkdownSyntaxThemes();
   const componentKey = React.useMemo(() => {
     const signature = part?.id ? `part-${part.id}` : `message-${messageId}`;
     return `markdown-${signature}`;
@@ -455,7 +479,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
     <div className={cn('break-words', className)}>
       <Streamdown
         mode={isStreaming ? 'streaming' : 'static'}
-        shikiTheme={shikiThemes}
+        shikiTheme={syntaxThemes}
         className={streamdownClassName}
         controls={{ code: false, table: false }}
         components={streamdownComponents}
@@ -481,7 +505,7 @@ export const SimpleMarkdownRenderer: React.FC<{
   className?: string;
   variant?: MarkdownVariant;
 }> = ({ content, className, variant = 'assistant' }) => {
-  const shikiThemes = useMarkdownShikiThemes();
+  const syntaxThemes = useMarkdownSyntaxThemes();
 
   const streamdownClassName = variant === 'tool'
     ? 'streamdown-content streamdown-tool'
@@ -491,7 +515,7 @@ export const SimpleMarkdownRenderer: React.FC<{
     <div className={cn('break-words', className)}>
       <Streamdown
         mode="static"
-        shikiTheme={shikiThemes}
+        shikiTheme={syntaxThemes}
         className={streamdownClassName}
         controls={{ code: false, table: false }}
         components={streamdownComponents}

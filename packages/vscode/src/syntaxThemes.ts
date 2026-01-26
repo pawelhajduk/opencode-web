@@ -6,7 +6,7 @@ type VSCodeThemeContribution = {
   path?: string;
 };
 
-export type WebviewShikiThemePayload = {
+export type WebviewSyntaxThemePayload = {
   light?: Record<string, unknown>;
   dark?: Record<string, unknown>;
 };
@@ -15,7 +15,7 @@ let outputChannel: vscode.OutputChannel | null = null;
 
 const getOutputChannel = (): vscode.OutputChannel => {
   if (!outputChannel) {
-    outputChannel = vscode.window.createOutputChannel('OpenChamber Shiki Themes');
+    outputChannel = vscode.window.createOutputChannel('OpenChamber Syntax Themes');
   }
   return outputChannel;
 };
@@ -265,7 +265,7 @@ const ensureUniqueThemeName = (raw: Record<string, unknown>, suffix: string): Re
   return { ...raw, name: `${originalName} (${suffix})` };
 };
 
-export async function getWebviewShikiThemes(): Promise<WebviewShikiThemePayload | null> {
+export async function getWebviewSyntaxThemes(): Promise<WebviewSyntaxThemePayload | null> {
   const current = getThemeLabelFromConfig('colorTheme');
   const preferredLight = getThemeLabelFromConfig('preferredLightColorTheme') || current;
   const preferredDark = getThemeLabelFromConfig('preferredDarkColorTheme') || current;
@@ -279,7 +279,7 @@ export async function getWebviewShikiThemes(): Promise<WebviewShikiThemePayload 
   const lightLabel = themeVariant === 'light' ? current : preferredLight;
   const darkLabel = themeVariant === 'dark' ? current : preferredDark;
 
-  log(`Resolving Shiki themes - current: "${current}", variant: ${themeVariant}`);
+  log(`Resolving syntax themes - current: "${current}", variant: ${themeVariant}`);
   log(`Light label: "${lightLabel}", Dark label: "${darkLabel}"`);
 
   const [lightRaw, darkRaw] = await Promise.all([

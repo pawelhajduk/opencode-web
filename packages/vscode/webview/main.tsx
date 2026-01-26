@@ -27,7 +27,7 @@ declare global {
       initialSessionId?: string | null;
     };
     __OPENCHAMBER_VSCODE_THEME__?: VSCodeThemePayload['theme'];
-    __OPENCHAMBER_VSCODE_SHIKI_THEMES__?: { light?: Record<string, unknown>; dark?: Record<string, unknown> } | null;
+    __OPENCHAMBER_VSCODE_SYNTAX_THEMES__?: { light?: Record<string, unknown>; dark?: Record<string, unknown> } | null;
     __OPENCHAMBER_CONNECTION__?: { status: ConnectionStatus; error?: string; cliAvailable?: boolean };
     __OPENCHAMBER_HOME__?: string;
     __OPENCHAMBER_PANEL_TYPE__?: PanelType;
@@ -236,11 +236,11 @@ onThemeChange((payload) => {
       ? payload.kind
       : undefined) as VSCodeThemeKind | undefined;
 
-  if (typeof payload === 'object' && payload?.shikiThemes !== undefined) {
-    window.__OPENCHAMBER_VSCODE_SHIKI_THEMES__ = payload.shikiThemes;
+  if (typeof payload === 'object' && payload?.syntaxThemes !== undefined) {
+    window.__OPENCHAMBER_VSCODE_SYNTAX_THEMES__ = payload.syntaxThemes;
     window.dispatchEvent(
-      new CustomEvent('openchamber:vscode-shiki-themes', {
-        detail: { shikiThemes: payload.shikiThemes },
+      new CustomEvent('openchamber:vscode-syntax-themes', {
+        detail: { syntaxThemes: payload.syntaxThemes },
       }),
     );
   }
