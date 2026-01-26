@@ -142,36 +142,6 @@ const parseDiffStats = (metadata?: Record<string, unknown>): { added: number; re
     return { added, removed };
 };
 
-/**
- * Reconstruct original content from a unified diff.
- * This extracts removed lines (-) and context lines ( ) to rebuild what the file looked like before the edit.
- */
-const reconstructOriginalFromDiff = (diff: string): string => {
-    const lines = diff.split('\n');
-    const originalLines: string[] = [];
-    let inHunk = false;
-
-    for (const line of lines) {
-        if (line.startsWith('Index:') || line.startsWith('===') || line.startsWith('---') || line.startsWith('+++')) {
-            continue;
-        }
-
-        if (line.startsWith('@@')) {
-            inHunk = true;
-            continue;
-        }
-
-        if (inHunk) {
-            if (line.startsWith(' ')) {
-                originalLines.push(line.substring(1));
-            } else if (line.startsWith('-')) {
-                originalLines.push(line.substring(1));
-            }
-        }
-    }
-
-    return originalLines.join('\n');
-};
 
 const getRelativePath = (absolutePath: string, currentDirectory: string, isMobile: boolean): string => {
 
@@ -1027,7 +997,6 @@ const ToolExpandedContent: React.FC<ToolExpandedContentProps> = React.memo(({
         if (hasStringOutput && outputString.trim()) {
             if (part.tool === 'read') {
                 const formattedOutput = formatEditOutput(outputString, part.tool, metadata);
-                const lines = formattedOutput.split('\n');
                 const offset = typeof input?.offset === 'number' ? input.offset : 0;
                 const limit = typeof input?.limit === 'number' ? input.limit : undefined;
                 const isInfoMessage = (line: string) => line.trim().startsWith('(');
@@ -1458,7 +1427,7 @@ const ToolPart: React.FC<ToolPartProps> = ({ part, isExpanded, onToggle, syntaxT
         if (!isEditTool || !diffContent) return;
         if (!runtime?.editor?.openAIDiff) return;
 
-        let filePath: string | undefined = (input?.filePath || input?.file_path || input?.path || metadata?.filePath || metadata?.file_path || metadata?.path) as string | undefined;
+        const filePath: string | undefined = (input?.filePath || input?.file_path || input?.path || metadata?.filePath || metadata?.file_path || metadata?.path) as string | undefined;
         if (!filePath) return;
 
         const absolutePath = filePath.startsWith('/')
