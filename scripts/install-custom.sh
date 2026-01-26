@@ -54,9 +54,9 @@ detect_package_manager() {
   # Check if running inside an npm/pnpm/yarn/bun context
   if [ -n "$npm_config_user_agent" ]; then
     case "$npm_config_user_agent" in
+      bun*) echo "bun"; return ;;
       pnpm*) echo "pnpm"; return ;;
       yarn*) echo "yarn"; return ;;
-      bun*) echo "bun"; return ;;
       npm*) echo "npm"; return ;;
     esac
   fi
