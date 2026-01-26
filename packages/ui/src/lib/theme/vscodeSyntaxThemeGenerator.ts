@@ -60,7 +60,6 @@ export function generateVSCodeSyntaxTheme(vscodeThemeData: VSCodeThemeData, base
   const surface = baseTheme.colors.surface;
   
   // Extract common colors from VSCode theme
-  const background = colors['editor.background'] || surface.background;
   const foreground = colors['editor.foreground'] || syntax.base.foreground;
   
   // Map VSCode TextMate scopes to syntax theme properties
