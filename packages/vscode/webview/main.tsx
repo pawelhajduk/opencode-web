@@ -9,7 +9,7 @@ import {
 } from '@openchamber/ui/lib/theme/vscode/adapter';
 
 type ConnectionStatus = 'connecting' | 'connected' | 'error' | 'disconnected';
-type PanelType = 'chat' | 'agentManager' | 'settings';
+type PanelType = 'chat' | 'agentManager';
 
 declare const __OPENCHAMBER_WEBVIEW_BUILD_TIME__: string;
 
