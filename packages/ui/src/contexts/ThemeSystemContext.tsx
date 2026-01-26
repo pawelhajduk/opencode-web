@@ -12,8 +12,6 @@ import { updateDesktopSettings } from '@/lib/persistence';
 import {
   themes,
   getThemeById,
-  flexokiLightTheme,
-  flexokiDarkTheme,
   vercelLightTheme,
   vercelDarkTheme,
 } from '@/lib/theme/themes';
