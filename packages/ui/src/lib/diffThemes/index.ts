@@ -1,7 +1,7 @@
 export {
   DIFF_THEME_NAMES,
   type DiffThemeName,
-  type ShikiThemeRegistrationResolvedLike,
+  type SyntaxThemeResolved,
   flexokiDarkDiffTheme,
   flexokiLightDiffTheme,
   vercelDarkDiffTheme,

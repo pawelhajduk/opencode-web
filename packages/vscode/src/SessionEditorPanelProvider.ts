@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { handleBridgeMessage, type BridgeRequest, type BridgeResponse } from './bridge';
 import { getThemeKindName } from './theme';
 import type { OpenCodeManager, ConnectionStatus } from './opencode';
-import { getWebviewShikiThemes } from './shikiThemes';
+import { getWebviewSyntaxThemes } from './syntaxThemes';
 import { getWebviewHtml } from './webviewHtml';
 import type { DiffContentProvider } from './DiffContentProvider';
 
@@ -115,11 +115,11 @@ export class SessionEditorPanelProvider {
 
   public updateTheme(kind: vscode.ColorThemeKind) {
     const themeKind = getThemeKindName(kind);
-    void getWebviewShikiThemes().then((shikiThemes) => {
+    void getWebviewSyntaxThemes().then((syntaxThemes) => {
       for (const entry of this._panels.values()) {
         entry.panel.webview.postMessage({
           type: 'themeChange',
-          theme: { kind: themeKind, shikiThemes },
+          theme: { kind: themeKind, syntaxThemes },
         });
       }
     });

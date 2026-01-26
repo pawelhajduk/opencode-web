@@ -525,7 +525,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // Theme changes can update the `workbench.colorTheme` setting slightly after the
   // `activeColorTheme` event. Listen for config changes too so we can re-resolve
-  // the contributed theme JSON and update Shiki themes in the webview.
+  // the contributed theme JSON and update syntax themes in the webview.
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (

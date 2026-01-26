@@ -178,12 +178,12 @@ export const DiffWorkerProvider: React.FC<DiffWorkerProviderProps> = ({ children
   ensureDiffThemesRegistered();
 
   const highlighterOptions = useMemo(() => {
-    const currentShikiTheme = getDiffThemeForUITheme(currentThemeId, isDark);
+    const currentSyntaxTheme = getDiffThemeForUITheme(currentThemeId, isDark);
     const lightTheme = getDiffThemeForUITheme(currentThemeId, false);
 
     return {
       theme: {
-        dark: currentShikiTheme,
+        dark: currentSyntaxTheme,
         light: lightTheme,
       },
       themeType: isDark ? ('dark' as const) : ('light' as const),

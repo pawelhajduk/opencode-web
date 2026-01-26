@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { handleBridgeMessage, type BridgeRequest, type BridgeResponse } from './bridge';
 import { getThemeKindName } from './theme';
 import type { OpenCodeManager, ConnectionStatus } from './opencode';
-import { getWebviewShikiThemes } from './shikiThemes';
+import { getWebviewSyntaxThemes } from './syntaxThemes';
 import { getWebviewHtml } from './webviewHtml';
 import type { DiffContentProvider } from './DiffContentProvider';
 
@@ -53,7 +53,6 @@ export class AgentManagerPanelProvider {
 
     this._panel.webview.html = this._getHtmlForWebview(this._panel.webview);
     
-    // Send theme payload (including optional Shiki theme JSON) after the webview is set up.
     void this.updateTheme(vscode.window.activeColorTheme.kind);
     
     // Send cached connection status
@@ -106,10 +105,10 @@ export class AgentManagerPanelProvider {
   public updateTheme(kind: vscode.ColorThemeKind) {
     if (this._panel) {
       const themeKind = getThemeKindName(kind);
-      void getWebviewShikiThemes().then((shikiThemes) => {
+      void getWebviewSyntaxThemes().then((syntaxThemes) => {
         this._panel?.webview.postMessage({
           type: 'themeChange',
-          theme: { kind: themeKind, shikiThemes },
+          theme: { kind: themeKind, syntaxThemes },
         });
       });
     }
