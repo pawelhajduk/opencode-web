@@ -1,0 +1,95 @@
+name: Custom Release
+
+on:
+  push:
+    branches:
+      - release
+
+concurrency:
+  group: custom-release
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  custom-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Calculate version
+        id: version
+        run: |
+          # Read base version from packages/web/package.json
+          BASE_VERSION=$(node -e "console.log(require('./packages/web/package.json').version)")
+          echo "base_version=$BASE_VERSION" >> $GITHUB_OUTPUT
+          
+          # Fetch latest GitHub release
+          LATEST_RELEASE=$(curl -s https://api.github.com/repos/pawelhajduk/opencode-web/releases/latest)
+          LATEST_TAG=$(echo "$LATEST_RELEASE" | grep -o '"tag_name": "[^"]*' | cut -d'"' -f4)
+          
+          # Extract build number from tag (e.g., v1.5.5.1 -> 1)
+          if [[ -z "$LATEST_TAG" ]]; then
+            BUILD_NUMBER=0
+          else
+            BUILD_NUMBER=$(echo "$LATEST_TAG" | grep -o '\.[0-9]*$' | cut -d'.' -f2)
+            if [[ -z "$BUILD_NUMBER" ]]; then
+              BUILD_NUMBER=0
+            fi
+          fi
+          
+          # Increment build number
+          NEW_BUILD=$((BUILD_NUMBER + 1))
+          NEW_VERSION="${BASE_VERSION}.${NEW_BUILD}"
+          
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "build_number=$NEW_BUILD" >> $GITHUB_OUTPUT
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build UI package
+        run: bun run --cwd packages/ui build
+
+      - name: Build web package
+        run: bun run --cwd packages/web build
+
+      - name: Type check
+        run: bun run type-check
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Modify package.json
+        run: |
+          node -e "
+            const fs = require('fs');
+            const path = './packages/web/package.json';
+            const pkg = require(path);
+            pkg.name = '@pawelhajduk/openchamber';
+            pkg.version = '${{ steps.version.outputs.new_version }}';
+            fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + '\n');
+          "
+
+      - name: Create npm tarball
+        working-directory: packages/web
+        run: npm pack
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.new_version }}
+          name: OpenChamber Custom v${{ steps.version.outputs.new_version }}
+          body: "Custom build of OpenChamber v${{ steps.version.outputs.new_version }}"
+          files: packages/web/*.tgz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
