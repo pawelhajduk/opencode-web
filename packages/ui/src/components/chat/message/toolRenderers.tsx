@@ -88,7 +88,7 @@ export const renderListOutput = (output: string, options?: { unstyled?: boolean 
     }
 };
 
-export const renderGrepOutput = (output: string, isMobile: boolean, options?: { unstyled?: boolean }) => {
+export const renderGrepOutput = (output: string, isMobile: boolean, options?: { unstyled?: boolean; wrapLines?: boolean }) => {
     try {
         const lines = output.trim().split('\n').filter(Boolean);
         if (lines.length === 0) return null;
@@ -109,10 +109,13 @@ export const renderGrepOutput = (output: string, isMobile: boolean, options?: { 
             }
         });
 
+        const wrapLines = options?.wrapLines ?? false;
+
         return (
             <div
                 className={cn(
-                    'space-y-2 w-full min-w-0',
+                    'space-y-2',
+                    wrapLines ? 'w-full min-w-0' : 'w-fit min-w-full',
                     options?.unstyled ? null : 'p-3 bg-muted/20 rounded-xl border border-border/30'
                 )}
                 style={typography.tool.popup}
@@ -131,15 +134,22 @@ export const renderGrepOutput = (output: string, isMobile: boolean, options?: { 
                                     return null;
                                 }
                                 return (
-                                    <div key={idx} className={cn('flex items-start gap-2 min-w-0', isMobile ? 'typography-micro' : 'typography-code')}>
+                                    <div key={idx} className={cn('flex items-start gap-2', wrapLines ? 'min-w-0' : '', isMobile ? 'typography-micro' : 'typography-code')}>
                                         <div className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1.5" style={{ backgroundColor: 'var(--status-info)', opacity: 0.6 }} />
-                                        <div className="flex gap-2 min-w-0 flex-1">
+                                        <div className={cn('flex gap-2', wrapLines ? 'min-w-0 flex-1' : '')}>
                                             {match.lineNum && (
                                                 <span className="text-muted-foreground font-mono whitespace-nowrap">
                                                     Line {match.lineNum}:
                                                 </span>
                                             )}
-                                            <span className="text-foreground font-mono break-words flex-1">
+                                            <span 
+                                                className={cn('text-foreground font-mono', wrapLines && 'flex-1')}
+                                                style={{
+                                                    whiteSpace: wrapLines ? 'pre-wrap' : 'pre',
+                                                    wordBreak: wrapLines ? 'break-word' : 'normal',
+                                                    overflowWrap: wrapLines ? 'anywhere' : 'normal',
+                                                }}
+                                            >
                                                 {match.content || '\u00A0'}
                                             </span>
                                         </div>
