@@ -49,25 +49,54 @@ get_node_version() {
   fi
 }
 
-# Check if Bun is installed (required)
-check_bun() {
-  if ! command_exists bun; then
-    return 1
+# Detect preferred package manager
+detect_package_manager() {
+  # Check if running inside an npm/pnpm/yarn/bun context
+  if [ -n "$npm_config_user_agent" ]; then
+    case "$npm_config_user_agent" in
+      pnpm*) echo "pnpm"; return ;;
+      yarn*) echo "yarn"; return ;;
+      bun*) echo "bun"; return ;;
+      npm*) echo "npm"; return ;;
+    esac
   fi
-  return 0
+
+  # Check for lockfiles in current directory (user preference)
+  if [ -f "pnpm-lock.yaml" ]; then
+    echo "pnpm"; return
+  elif [ -f "yarn.lock" ]; then
+    echo "yarn"; return
+  elif [ -f "bun.lockb" ]; then
+    echo "bun"; return
+  elif [ -f "package-lock.json" ]; then
+    echo "npm"; return
+  fi
+
+  # Check which package managers are available (prefer pnpm > bun > yarn > npm)
+  if command_exists pnpm; then
+    echo "pnpm"
+  elif command_exists bun; then
+    echo "bun"
+  elif command_exists yarn; then
+    echo "yarn"
+  elif command_exists npm; then
+    echo "npm"
+  else
+    echo "none"
+  fi
 }
 
-# Suggest Bun installation
-suggest_bun_install() {
-  echo ""
-  error "Bun is required but not found."
-  echo ""
-  echo "  Install Bun from: https://bun.sh"
-  echo ""
-  echo "  Quick install:"
-  echo "    curl -fsSL https://bun.sh/install | bash"
-  echo ""
-  exit 1
+# Get install command for package manager
+get_install_command() {
+  local pm=$1
+  local target=$2
+  case "$pm" in
+    pnpm) echo "pnpm add -g $target" ;;
+    yarn) echo "yarn global add $target" ;;
+    bun) echo "bun add -g $target" ;;
+    npm) echo "npm install -g $target" ;;
+    *) echo "" ;;
+  esac
 }
 
 # Suggest Node.js installation
@@ -75,7 +104,47 @@ suggest_node_install() {
   echo ""
   error "Node.js $MIN_NODE_VERSION+ is required but not found."
   echo ""
-  echo "  Install Node.js from: https://nodejs.org"
+  echo "Install Node.js using one of these methods:"
+  echo ""
+  
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    echo "  Using Homebrew:"
+    echo "    brew install node"
+    echo ""
+  fi
+  
+  echo "  Using nvm (recommended):"
+  echo "    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash"
+  echo "    nvm install $MIN_NODE_VERSION"
+  echo ""
+  echo "  Using fnm:"
+  echo "    curl -fsSL https://fnm.vercel.app/install | bash"
+  echo "    fnm install $MIN_NODE_VERSION"
+  echo ""
+  echo "  Official installer:"
+  echo "    https://nodejs.org/"
+  echo ""
+  exit 1
+}
+
+# Install package manager suggestion
+suggest_pm_install() {
+  echo ""
+  error "No package manager found (npm, pnpm, yarn, or bun)."
+  echo ""
+  echo "Install a package manager:"
+  echo ""
+  echo "  npm (comes with Node.js):"
+  echo "    Install Node.js from https://nodejs.org/"
+  echo ""
+  echo "  pnpm (recommended):"
+  echo "    curl -fsSL https://get.pnpm.io/install.sh | sh -"
+  echo ""
+  echo "  bun:"
+  echo "    curl -fsSL https://bun.sh/install | bash"
+  echo ""
+  echo "  yarn:"
+  echo "    npm install -g yarn"
   echo ""
   exit 1
 }
@@ -127,13 +196,6 @@ main() {
   echo "  ╰───────────────────────────────────╯"
   echo ""
 
-  # Check Bun (required)
-  info "Checking Bun..."
-  if ! check_bun; then
-    suggest_bun_install
-  fi
-  success "Bun found"
-
   # Check Node.js
   info "Checking Node.js..."
   NODE_VERSION=$(get_node_version)
@@ -147,6 +209,15 @@ main() {
     fi
   fi
   success "Node.js v$NODE_VERSION found"
+
+  # Detect package manager
+  info "Detecting package manager..."
+  PM=$(detect_package_manager)
+  
+  if [ "$PM" = "none" ]; then
+    suggest_pm_install
+  fi
+  success "Using $PM"
 
   # Fetch latest release
   info "Fetching latest release from GitHub..."
@@ -179,13 +250,21 @@ main() {
   
   success "Tarball downloaded"
 
-  # Install globally with Bun
+  # Get install command
+  INSTALL_CMD=$(get_install_command "$PM" "$TARBALL_PATH")
+  
+  if [ -z "$INSTALL_CMD" ]; then
+    error "Could not determine install command"
+    exit 1
+  fi
+
+  # Install globally
   echo ""
   info "Installing OpenChamber globally..."
-  echo "  Running: bun add -g $TARBALL_PATH"
+  echo "  Running: $INSTALL_CMD"
   echo ""
   
-  if bun add -g "$TARBALL_PATH"; then
+  if eval "$INSTALL_CMD"; then
     # Cleanup
     rm -f "$TARBALL_PATH"
     
@@ -207,7 +286,10 @@ main() {
     error "Installation failed"
     echo ""
     echo "  Try running manually:"
-    echo "    bun add -g $TARBALL_PATH"
+    echo "    $INSTALL_CMD"
+    echo ""
+    echo "  If you get permission errors, see:"
+    echo "    https://docs.npmjs.com/resolving-eacces-permissions-errors-when-installing-packages-globally"
     echo ""
     exit 1
   fi
