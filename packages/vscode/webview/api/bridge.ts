@@ -152,7 +152,7 @@ type ThemeChangePayload =
   | 'dark'
   | {
       kind?: 'light' | 'dark' | 'high-contrast';
-      shikiThemes?: { light?: Record<string, unknown>; dark?: Record<string, unknown> } | null;
+      syntaxThemes?: { light?: Record<string, unknown>; dark?: Record<string, unknown> } | null;
     };
 type ThemeChangeHandler = (theme: ThemeChangePayload) => void;
 let themeChangeHandler: ThemeChangeHandler | null = null;

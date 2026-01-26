@@ -431,32 +431,28 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
 
     const [vscodeThemeVersion, setVscodeThemeVersion] = React.useState(0);
 
-    // Listen for VSCode theme updates
     React.useEffect(() => {
         if (!isVSCodeRuntime() || typeof window === 'undefined') return;
 
         const handler = () => {
-            // Force re-computation when VSCode theme changes
             setVscodeThemeVersion((v) => v + 1);
         };
 
-        window.addEventListener('openchamber:vscode-shiki-themes', handler as EventListener);
-        return () => window.removeEventListener('openchamber:vscode-shiki-themes', handler as EventListener);
+        window.addEventListener('openchamber:vscode-syntax-themes', handler as EventListener);
+        return () => window.removeEventListener('openchamber:vscode-syntax-themes', handler as EventListener);
     }, []);
 
     const syntaxTheme = React.useMemo(() => {
-        // Try VSCode theme first (if running in VSCode)
         if (isVSCodeRuntime() && typeof window !== 'undefined') {
-            const vscodeShikiThemes = window.__OPENCHAMBER_VSCODE_SHIKI_THEMES__;
-            if (vscodeShikiThemes && currentTheme) {
-                const themeData = isDarkTheme ? vscodeShikiThemes.dark : vscodeShikiThemes.light;
+            const vscodeSyntaxThemes = window.__OPENCHAMBER_VSCODE_SYNTAX_THEMES__;
+            if (vscodeSyntaxThemes && currentTheme) {
+                const themeData = isDarkTheme ? vscodeSyntaxThemes.dark : vscodeSyntaxThemes.light;
                 if (themeData) {
                     return generateVSCodeSyntaxTheme(themeData, currentTheme);
                 }
             }
         }
 
-        // Fallback to base theme generator
         if (currentTheme) {
             return generateSyntaxTheme(currentTheme);
         }

@@ -27,7 +27,7 @@ type VSCodeTextMateTheme = {
   semanticTokenColors?: Record<string, string>;
 };
 
-export type ShikiThemeRegistrationResolvedLike = VSCodeTextMateTheme & {
+export type SyntaxThemeResolved = VSCodeTextMateTheme & {
   settings: VSCodeTokenColorRule[];
   fg: string;
   bg: string;
@@ -58,13 +58,13 @@ function toResolvedTheme(
   raw: VSCodeTextMateTheme,
   name: string,
   type: VSCodeTextMateTheme['type']
-): ShikiThemeRegistrationResolvedLike {
+): SyntaxThemeResolved {
   const bg = raw.colors?.['editor.background'];
   const fg = raw.colors?.['editor.foreground'];
 
   if (!bg || !fg) {
     throw new Error(
-      `Shiki theme "${name}" is missing editor.background/editor.foreground`
+      `Syntax theme "${name}" is missing editor.background/editor.foreground`
     );
   }
 
@@ -161,7 +161,7 @@ export function getDiffThemeForUITheme(
 
 export function getDiffThemeByName(
   themeName: DiffThemeName
-): ShikiThemeRegistrationResolvedLike {
+): SyntaxThemeResolved {
   switch (themeName) {
     case DIFF_THEME_NAMES.VERCEL_DARK:
       return vercelDarkDiffTheme;
