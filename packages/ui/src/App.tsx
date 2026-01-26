@@ -233,7 +233,7 @@ function App({ apis }: AppProps) {
   if (isVSCodeRuntime) {
     // Check if this is a specialized panel
     const panelType = typeof window !== 'undefined' 
-      ? (window as { __OPENCHAMBER_PANEL_TYPE__?: 'chat' | 'agentManager' | 'settings' }).__OPENCHAMBER_PANEL_TYPE__ 
+      ? (window as { __OPENCHAMBER_PANEL_TYPE__?: 'chat' | 'agentManager' }).__OPENCHAMBER_PANEL_TYPE__ 
       : 'chat';
     
     if (panelType === 'agentManager') {
@@ -242,19 +242,6 @@ function App({ apis }: AppProps) {
           <RuntimeAPIProvider apis={apis}>
             <div className="h-full text-foreground bg-background">
               <AgentManagerView />
-              <Toaster />
-            </div>
-          </RuntimeAPIProvider>
-        </ErrorBoundary>
-      );
-    }
-
-    if (panelType === 'settings') {
-      return (
-        <ErrorBoundary>
-          <RuntimeAPIProvider apis={apis}>
-            <div className="h-full text-foreground bg-background">
-              <SettingsView />
               <Toaster />
             </div>
           </RuntimeAPIProvider>
