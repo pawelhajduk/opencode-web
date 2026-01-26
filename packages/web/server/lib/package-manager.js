@@ -7,8 +7,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const PACKAGE_NAME = '@openchamber/web';
-const NPM_REGISTRY_URL = `https://registry.npmjs.org/${PACKAGE_NAME}`;
-const CHANGELOG_URL = 'https://raw.githubusercontent.com/btriapitsyn/openchamber/main/CHANGELOG.md';
+const GITHUB_REPO = 'pawelhajduk/opencode-web';
+const GITHUB_RELEASES_URL = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;
 
 /**
  * Detect which package manager was used to install this package.
@@ -107,17 +107,12 @@ function isPackageInstalledWith(pm) {
 /**
  * Get the update command for the detected package manager
  */
-export function getUpdateCommand(pm = detectPackageManager()) {
-  switch (pm) {
-    case 'pnpm':
-      return `pnpm add -g ${PACKAGE_NAME}@latest`;
-    case 'yarn':
-      return `yarn global add ${PACKAGE_NAME}@latest`;
-    case 'bun':
-      return `bun add -g ${PACKAGE_NAME}@latest`;
-    default:
-      return `npm install -g ${PACKAGE_NAME}@latest`;
+export async function getUpdateCommand(pm = detectPackageManager()) {
+  const tarballUrl = await getLatestReleaseTarballUrl();
+  if (!tarballUrl) {
+    throw new Error('Unable to fetch latest release tarball URL from GitHub');
   }
+  return `bun add -g ${tarballUrl}`;
 }
 
 /**
@@ -134,23 +129,31 @@ export function getCurrentVersion() {
 }
 
 /**
- * Fetch latest version from npm registry
+ * Fetch latest version from GitHub releases API
  */
 export async function getLatestVersion() {
   try {
-    const response = await fetch(NPM_REGISTRY_URL, {
+    const response = await fetch(GITHUB_RELEASES_URL, {
       headers: { Accept: 'application/json' },
       signal: AbortSignal.timeout(10000),
     });
 
+    if (response.status === 403 || response.status === 429) {
+      // Rate limited
+      console.warn('GitHub API rate limit exceeded');
+      return null;
+    }
+
     if (!response.ok) {
-      throw new Error(`Registry responded with ${response.status}`);
+      throw new Error(`GitHub API responded with ${response.status}`);
     }
 
     const data = await response.json();
-    return data['dist-tags']?.latest || null;
+    const tagName = data.tag_name || '';
+    // Strip 'v' prefix: v1.5.5.1 → 1.5.5.1
+    return tagName.replace(/^v/, '') || null;
   } catch (error) {
-    console.warn('Failed to fetch latest version from npm:', error.message);
+    console.warn('Failed to fetch latest version from GitHub:', error.message);
     return null;
   }
 }
@@ -164,34 +167,39 @@ function parseVersion(version) {
 }
 
 /**
- * Fetch changelog notes between versions
+ * Get the tarball URL from the latest GitHub release
+ */
+async function getLatestReleaseTarballUrl() {
+  try {
+    const response = await fetch(GITHUB_RELEASES_URL, {
+      headers: { Accept: 'application/json' },
+      signal: AbortSignal.timeout(10000),
+    });
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    const asset = data.assets?.find((a) => a.name.endsWith('.tgz'));
+    return asset?.browser_download_url || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Fetch changelog notes from GitHub release body
  */
 export async function fetchChangelogNotes(fromVersion, toVersion) {
   try {
-    const response = await fetch(CHANGELOG_URL, {
+    const response = await fetch(GITHUB_RELEASES_URL, {
+      headers: { Accept: 'application/json' },
       signal: AbortSignal.timeout(10000),
     });
 
     if (!response.ok) return undefined;
 
-    const changelog = await response.text();
-    const sections = changelog.split(/^## /m).slice(1);
-
-    const fromNum = parseVersion(fromVersion);
-    const toNum = parseVersion(toVersion);
-
-    const relevantSections = sections.filter((section) => {
-      const match = section.match(/^\[(\d+\.\d+\.\d+)\]/);
-      if (!match) return false;
-      const ver = parseVersion(match[1]);
-      return ver > fromNum && ver <= toNum;
-    });
-
-    if (relevantSections.length === 0) return undefined;
-
-    return relevantSections
-      .map((s) => '## ' + s.trim())
-      .join('\n\n');
+    const data = await response.json();
+    return data.body || undefined;
   } catch {
     return undefined;
   }
@@ -216,8 +224,6 @@ export async function checkForUpdates() {
   const latestNum = parseVersion(latestVersion);
   const available = latestNum > currentNum;
 
-  const pm = detectPackageManager();
-
   let changelog;
   if (available) {
     changelog = await fetchChangelogNotes(currentVersion, latestVersion);
@@ -228,8 +234,6 @@ export async function checkForUpdates() {
     version: latestVersion,
     currentVersion,
     body: changelog,
-    packageManager: pm,
-    // Show our CLI command, not raw package manager command
     updateCommand: 'openchamber update',
   };
 }
@@ -237,19 +241,57 @@ export async function checkForUpdates() {
 /**
  * Execute the update (used by CLI)
  */
-export function executeUpdate(pm = detectPackageManager()) {
-  const command = getUpdateCommand(pm);
-  console.log(`Updating ${PACKAGE_NAME} using ${pm}...`);
-  console.log(`Running: ${command}`);
+export async function executeUpdate(pm = detectPackageManager()) {
+  try {
+    const tarballUrl = await getLatestReleaseTarballUrl();
+    if (!tarballUrl) {
+      console.error('Failed to fetch latest release tarball URL from GitHub');
+      return {
+        success: false,
+        exitCode: 1,
+      };
+    }
 
-  const [cmd, ...args] = command.split(' ');
-  const result = spawnSync(cmd, args, {
-    stdio: 'inherit',
-    shell: true,
-  });
+    const tempFile = '/tmp/openchamber-update.tgz';
+    console.log(`Downloading update from ${tarballUrl}...`);
 
-  return {
-    success: result.status === 0,
-    exitCode: result.status,
-  };
+    // Download tarball
+    const downloadResponse = await fetch(tarballUrl);
+    if (!downloadResponse.ok) {
+      console.error(`Failed to download tarball: ${downloadResponse.status}`);
+      return {
+        success: false,
+        exitCode: 1,
+      };
+    }
+
+    const buffer = await downloadResponse.arrayBuffer();
+    fs.writeFileSync(tempFile, Buffer.from(buffer));
+
+    console.log(`Installing update using bun...`);
+    const command = `bun add -g ${tempFile}`;
+    const [cmd, ...args] = command.split(' ');
+    const result = spawnSync(cmd, args, {
+      stdio: 'inherit',
+      shell: true,
+    });
+
+    // Clean up temp file
+    try {
+      fs.unlinkSync(tempFile);
+    } catch {
+      // Ignore cleanup errors
+    }
+
+    return {
+      success: result.status === 0,
+      exitCode: result.status,
+    };
+  } catch (error) {
+    console.error('Update failed:', error.message);
+    return {
+      success: false,
+      exitCode: 1,
+    };
+  }
 }
