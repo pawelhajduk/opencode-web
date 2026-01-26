@@ -62,21 +62,21 @@ detect_package_manager() {
   fi
 
   # Check for lockfiles in current directory (user preference)
-  if [ -f "pnpm-lock.yaml" ]; then
+  if [ -f "bun.lockb" ]; then
+    echo "bun"; return
+  elif [ -f "pnpm-lock.yaml" ]; then
     echo "pnpm"; return
   elif [ -f "yarn.lock" ]; then
     echo "yarn"; return
-  elif [ -f "bun.lockb" ]; then
-    echo "bun"; return
   elif [ -f "package-lock.json" ]; then
     echo "npm"; return
   fi
 
   # Check which package managers are available (prefer pnpm > bun > yarn > npm)
-  if command_exists pnpm; then
-    echo "pnpm"
-  elif command_exists bun; then
+  if command_exists bun; then
     echo "bun"
+  elif command_exists pnmp; then
+    echo "pnmp"
   elif command_exists yarn; then
     echo "yarn"
   elif command_exists npm; then
@@ -91,9 +91,9 @@ get_install_command() {
   local pm=$1
   local target=$2
   case "$pm" in
+    bun) echo "bun add -g $target" ;;
     pnpm) echo "pnpm add -g $target" ;;
     yarn) echo "yarn global add $target" ;;
-    bun) echo "bun add -g $target" ;;
     npm) echo "npm install -g $target" ;;
     *) echo "" ;;
   esac
