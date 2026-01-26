@@ -12,10 +12,9 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     applyTheme();
     applyTypography();
     applyPadding();
-  }, [theme, applyTheme, fontSize, applyTypography, padding, applyPadding]);
+  }, [applyTheme, applyTypography, applyPadding]);
 
   React.useEffect(() => {
-
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
     const handleChange = () => {

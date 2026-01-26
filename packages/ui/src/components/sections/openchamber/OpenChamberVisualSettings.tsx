@@ -167,7 +167,7 @@ export const OpenChamberVisualSettings: React.FC<OpenChamberVisualSettingsProps>
                 </div>
             )}
 
-            {shouldShow('colorScheme') && !isVSCodeRuntime() && (
+            {shouldShow('colorScheme') && (
                 <div className="space-y-4">
                     <div className="space-y-1">
                         <h3 className="typography-ui-header font-semibold text-foreground">
