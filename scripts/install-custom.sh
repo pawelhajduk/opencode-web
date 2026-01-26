@@ -165,11 +165,11 @@ fetch_latest_release() {
 extract_tarball_url() {
   local json_response="$1"
   
-  if ! command_exists jq; then
-    # Fallback: use grep and sed if jq is not available
-    echo "$json_response" | grep -o '"browser_download_url":"[^"]*\.tgz"' | head -1 | sed 's/"browser_download_url":"\(.*\)"/\1/'
+  if command_exists jq; then
+    echo "$json_response" | jq -r '.assets[0].browser_download_url'
   else
-    echo "$json_response" | jq -r '.assets[] | select(.name | endswith(".tgz")) | .browser_download_url' | head -1
+    # Fallback: extract first browser_download_url from assets
+    echo "$json_response" | grep -o '"browser_download_url": *"[^"]*"' | head -1 | sed 's/.*"\(http[^"]*\)".*/\1/'
   fi
 }
 
