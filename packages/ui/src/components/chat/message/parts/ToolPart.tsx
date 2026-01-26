@@ -316,11 +316,11 @@ const CollapsibleCodeBlock: React.FC<CollapsibleCodeBlockProps> = ({
     return (
         <div className={cn('relative', className)}>
             {showWrapToggle && (
-                <div className="absolute top-0 right-0 z-10">
+                <div className="absolute top-1 right-1 z-10">
                     <button
                         type="button"
                         onClick={() => setWrapLines(!wrapLines)}
-                        className="p-1.5 rounded-lg bg-muted/80 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                        className="p-1.5 rounded-lg bg-muted/80 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors border border-border/40"
                         title={wrapLines ? 'Disable line wrap' : 'Enable line wrap'}
                     >
                         {wrapLines ? <RiText className="h-3.5 w-3.5" /> : <RiTextWrap className="h-3.5 w-3.5" />}
@@ -534,11 +534,11 @@ const DiffPreview: React.FC<DiffPreviewProps> = ({ diff, syntaxTheme, input }) =
 
     return (
         <div className="relative">
-            <div className="absolute top-2 right-2 z-10">
+            <div className="absolute top-9 right-1 z-10">
                 <button
                     type="button"
                     onClick={() => setWrapLines(!wrapLines)}
-                    className="p-1.5 rounded-lg bg-muted/80 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                    className="p-1.5 rounded-lg bg-muted/80 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors border border-border/40"
                     title={wrapLines ? 'Disable line wrap' : 'Enable line wrap'}
                 >
                     {wrapLines ? <RiText className="h-3.5 w-3.5" /> : <RiTextWrap className="h-3.5 w-3.5" />}
@@ -644,11 +644,11 @@ const WriteInputPreview: React.FC<WriteInputPreviewProps> = ({ content, syntaxTh
 
     return (
         <div className="w-full min-w-0 relative">
-            <div className="absolute top-1 right-1 z-10">
+            <div className="absolute top-9 right-1 z-10">
                 <button
                     type="button"
                     onClick={() => setWrapLines(!wrapLines)}
-                    className="p-1.5 rounded-lg bg-muted/80 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                    className="p-1.5 rounded-lg bg-muted/80 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors border border-border/40"
                     title={wrapLines ? 'Disable line wrap' : 'Enable line wrap'}
                 >
                     {wrapLines ? <RiText className="h-3.5 w-3.5" /> : <RiTextWrap className="h-3.5 w-3.5" />}
@@ -732,6 +732,51 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({ content, filePath, displayP
                     style={{ imageRendering: 'auto' }}
                 />
             </div>
+        </div>
+    );
+};
+
+interface GrepOutputWithWrapProps {
+    output: string;
+    isMobile: boolean;
+}
+
+const GrepOutputWithWrap: React.FC<GrepOutputWithWrapProps> = ({ output, isMobile }) => {
+    const [wrapLines, setWrapLines] = React.useState(false);
+    
+    const grepOutput = renderGrepOutput(output, isMobile, { unstyled: true, wrapLines });
+    
+    return (
+        <div className="relative">
+            <div className="absolute top-1 right-1 z-10">
+                <button
+                    type="button"
+                    onClick={() => setWrapLines(!wrapLines)}
+                    className="p-1.5 rounded-lg bg-muted/80 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors border border-border/40"
+                    title={wrapLines ? 'Disable line wrap' : 'Enable line wrap'}
+                >
+                    {wrapLines ? <RiText className="h-3.5 w-3.5" /> : <RiTextWrap className="h-3.5 w-3.5" />}
+                </button>
+            </div>
+            <ScrollableOverlay
+                outerClassName="w-full min-w-0 flex-none overflow-hidden max-h-[60vh]"
+                className="tool-output-surface p-2 rounded-xl w-full min-w-0 border border-border/20 bg-transparent"
+                disableHorizontal={wrapLines}
+            >
+                <div className={wrapLines ? "w-full min-w-0" : "w-fit min-w-full"}>
+                    {grepOutput ?? (
+                        <pre 
+                            className="typography-code font-mono w-full min-w-0"
+                            style={{
+                                whiteSpace: wrapLines ? 'pre-wrap' : 'pre',
+                                wordBreak: wrapLines ? 'break-word' : 'normal',
+                            }}
+                        >
+                            {output}
+                        </pre>
+                    )}
+                </div>
+            </ScrollableOverlay>
         </div>
     );
 };
@@ -896,13 +941,11 @@ const ToolExpandedContent: React.FC<ToolExpandedContentProps> = ({
         }
 
         if (part.tool === 'grep' && hasStringOutput) {
-            const grepOutput = renderGrepOutput(outputString, isMobile, { unstyled: true });
-            return renderScrollableBlock(
-                grepOutput ?? (
-                    <pre className="typography-code font-mono whitespace-pre-wrap break-words w-full min-w-0">
-                        {outputString}
-                    </pre>
-                )
+            return (
+                <GrepOutputWithWrap
+                    output={outputString}
+                    isMobile={isMobile}
+                />
             );
         }
 
