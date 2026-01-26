@@ -263,8 +263,6 @@ export const buildVSCodeThemeFromPalette = (palette: VSCodeThemePalette): Theme 
   // Prefer stable UI colors for accent to avoid theme-specific diff values.
   const accent = read('button.background', read('textLink.foreground', base.colors.primary.base));
   const accentFg = read('button.foreground', base.colors.primary.foreground || base.colors.surface.background);
-  // Action icons use icon.foreground for consistency with VSCode UI
-  const iconForeground = read('icon.foreground', foreground);
   const hoverBg = read('list.hoverBackground', read('editor.selectionBackground', base.colors.interactive.hover));
   const activeBg = read('list.activeSelectionBackground', hoverBg);
   const selection = read('editor.selectionBackground', activeBg);
