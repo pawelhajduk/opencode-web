@@ -1,0 +1,216 @@
+#!/usr/bin/env bash
+# OpenChamber Custom Fork Install Script
+# Usage: curl -fsSL https://raw.githubusercontent.com/pawelhajduk/opencode-web/release/scripts/install-custom.sh | bash
+
+set -e
+
+# Constants
+REPO_OWNER="pawelhajduk"
+REPO_NAME="opencode-web"
+MIN_NODE_VERSION=20
+TEMP_DIR="/tmp"
+TARBALL_NAME="openchamber.tgz"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Helper functions
+info() {
+  echo -e "${BLUE}info${NC}  $1"
+}
+
+success() {
+  echo -e "${GREEN}success${NC}  $1"
+}
+
+warn() {
+  echo -e "${YELLOW}warn${NC}  $1"
+}
+
+error() {
+  echo -e "${RED}error${NC}  $1"
+}
+
+# Check if a command exists
+command_exists() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+# Get Node.js major version
+get_node_version() {
+  if command_exists node; then
+    node -v | sed 's/v//' | cut -d. -f1
+  else
+    echo "0"
+  fi
+}
+
+# Check if Bun is installed (required)
+check_bun() {
+  if ! command_exists bun; then
+    return 1
+  fi
+  return 0
+}
+
+# Suggest Bun installation
+suggest_bun_install() {
+  echo ""
+  error "Bun is required but not found."
+  echo ""
+  echo "  Install Bun from: https://bun.sh"
+  echo ""
+  echo "  Quick install:"
+  echo "    curl -fsSL https://bun.sh/install | bash"
+  echo ""
+  exit 1
+}
+
+# Suggest Node.js installation
+suggest_node_install() {
+  echo ""
+  error "Node.js $MIN_NODE_VERSION+ is required but not found."
+  echo ""
+  echo "  Install Node.js from: https://nodejs.org"
+  echo ""
+  exit 1
+}
+
+# Fetch latest release from GitHub API
+fetch_latest_release() {
+  local api_url="https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/releases/latest"
+  
+  if ! command_exists curl; then
+    error "curl is required but not found"
+    exit 1
+  fi
+  
+  curl -fsSL "$api_url"
+}
+
+# Extract tarball URL from GitHub API response
+extract_tarball_url() {
+  local json_response="$1"
+  
+  if ! command_exists jq; then
+    # Fallback: use grep and sed if jq is not available
+    echo "$json_response" | grep -o '"browser_download_url":"[^"]*\.tgz"' | head -1 | sed 's/"browser_download_url":"\(.*\)"/\1/'
+  else
+    echo "$json_response" | jq -r '.assets[] | select(.name | endswith(".tgz")) | .browser_download_url' | head -1
+  fi
+}
+
+# Extract version from GitHub API response
+extract_version() {
+  local json_response="$1"
+  
+  if ! command_exists jq; then
+    # Fallback: use grep and sed if jq is not available
+    echo "$json_response" | grep -o '"tag_name":"[^"]*"' | head -1 | sed 's/"tag_name":"\(.*\)"/\1/'
+  else
+    echo "$json_response" | jq -r '.tag_name'
+  fi
+}
+
+# Main installation function
+main() {
+  echo ""
+  echo "  ╭───────────────────────────────────╮"
+  echo "  │                                   │"
+  echo "  │   OpenChamber Custom Install      │"
+  echo "  │   Fork: $REPO_OWNER/$REPO_NAME"
+  echo "  │                                   │"
+  echo "  ╰───────────────────────────────────╯"
+  echo ""
+
+  # Check Node.js
+  info "Checking Node.js..."
+  NODE_VERSION=$(get_node_version)
+  
+  if [ "$NODE_VERSION" -lt "$MIN_NODE_VERSION" ]; then
+    if [ "$NODE_VERSION" -eq "0" ]; then
+      suggest_node_install
+    else
+      error "Node.js $MIN_NODE_VERSION+ required, found v$NODE_VERSION"
+      suggest_node_install
+    fi
+  fi
+  success "Node.js v$NODE_VERSION found"
+
+  # Check Bun (required)
+  info "Checking Bun..."
+  if ! check_bun; then
+    suggest_bun_install
+  fi
+  success "Bun found"
+
+  # Fetch latest release
+  info "Fetching latest release from GitHub..."
+  RELEASE_JSON=$(fetch_latest_release)
+  
+  if [ -z "$RELEASE_JSON" ]; then
+    error "Failed to fetch release information"
+    exit 1
+  fi
+
+  # Extract version and tarball URL
+  VERSION=$(extract_version "$RELEASE_JSON")
+  TARBALL_URL=$(extract_tarball_url "$RELEASE_JSON")
+  
+  if [ -z "$TARBALL_URL" ]; then
+    error "Could not find tarball in release assets"
+    exit 1
+  fi
+  
+  success "Found version $VERSION"
+
+  # Download tarball
+  TARBALL_PATH="$TEMP_DIR/$TARBALL_NAME"
+  info "Downloading tarball..."
+  
+  if ! curl -fsSL -o "$TARBALL_PATH" "$TARBALL_URL"; then
+    error "Failed to download tarball from $TARBALL_URL"
+    exit 1
+  fi
+  
+  success "Tarball downloaded"
+
+  # Install globally with Bun
+  echo ""
+  info "Installing OpenChamber globally..."
+  echo "  Running: bun add -g $TARBALL_PATH"
+  echo ""
+  
+  if bun add -g "$TARBALL_PATH"; then
+    # Cleanup
+    rm -f "$TARBALL_PATH"
+    
+    echo ""
+    success "OpenChamber installed successfully!"
+    echo ""
+    echo "  Get started:"
+    echo "    openchamber              # Start server on port 3000"
+    echo "    openchamber --help       # Show all options"
+    echo ""
+    echo "  Prerequisites:"
+    echo "    Make sure OpenCode is running: opencode serve"
+    echo ""
+  else
+    # Cleanup on failure
+    rm -f "$TARBALL_PATH"
+    
+    echo ""
+    error "Installation failed"
+    echo ""
+    echo "  Try running manually:"
+    echo "    bun add -g $TARBALL_PATH"
+    echo ""
+    exit 1
+  fi
+}
+
+main "$@"
