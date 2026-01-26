@@ -134,12 +134,6 @@
         "category": "OpenChamber",
         "title": "Settings",
         "icon": "$(settings-gear)"
-      },
-      {
-        "command": "openchamber.openSettings",
-        "category": "OpenChamber",
-        "title": "Open Settings in Editor",
-        "icon": "$(settings-gear)"
       }
     ],
     "submenus": [
