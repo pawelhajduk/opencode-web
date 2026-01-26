@@ -366,27 +366,10 @@ export const buildVSCodeThemeFromPalette = (palette: VSCodeThemePalette): Theme 
   // ===========================================
   
   const accent = read('button.background', read('textLink.foreground', base.colors.primary.base));
-  const accentHover = read('button.hoverBackground', accent);
-  const accentForeground = read('button.foreground', base.colors.primary.foreground || background);
-  const accentMuted = read('textLink.foreground', accent);
-
-  // ===========================================
-  // INTERACTIVE COLORS
-  // ===========================================
-  
-  // Border: Use widget.border (most generic), then input.border, panel.border
-  // DO NOT reduce opacity - these are already properly set by VS Code themes
-  const border = read('widget.border', '') ||
-    read('input.border', '') ||
-    read('panel.border', '') ||
-    read('sideBar.border', '') ||
-    read('contrastBorder', base.colors.interactive.border);
-  
-  // For high-contrast or missing borders, derive from foreground
-  const effectiveBorder = border || applyAlpha(foreground, isDark ? 0.25 : 0.2);
-  
-  // Hover/active backgrounds
-  const hoverBg = read('list.hoverBackground', base.colors.interactive.hover);
+  const accentFg = read('button.foreground', base.colors.primary.foreground || base.colors.surface.background);
+  // Action icons use icon.foreground for consistency with VSCode UI
+  const iconForeground = read('icon.foreground', foreground);
+  const hoverBg = read('list.hoverBackground', read('editor.selectionBackground', base.colors.interactive.hover));
   const activeBg = read('list.activeSelectionBackground', hoverBg);
   
   // Selection
