@@ -311,7 +311,7 @@ interface CollapsibleCodeBlockProps {
 
 const CollapsibleCodeBlock: React.FC<CollapsibleCodeBlockProps> = ({
     content,
-    collapsedLines = 5,
+    collapsedLines = 10,
     wrapLines: initialWrapLines = false,
     showWrapToggle = false,
     maxHeightClass = 'max-h-[60vh]',
@@ -522,15 +522,15 @@ const DiffPreview: React.FC<DiffPreviewProps> = ({ diff, syntaxTheme, input }) =
     
     const hunks = parseDiffToUnified(diff);
     const totalLines = hunks.reduce((sum, hunk) => sum + hunk.lines.length, 0);
-    const shouldCollapse = totalLines > 5;
+    const shouldCollapse = totalLines > 10;
     
     const displayHunks = shouldCollapse && !isExpanded 
         ? (() => {
             const result = [];
             let lineCount = 0;
             for (const hunk of hunks) {
-                if (lineCount >= 5) break;
-                const remainingLines = 5 - lineCount;
+                if (lineCount >= 10) break;
+                const remainingLines = 10 - lineCount;
                 if (hunk.lines.length <= remainingLines) {
                     result.push(hunk);
                     lineCount += hunk.lines.length;
@@ -539,7 +539,7 @@ const DiffPreview: React.FC<DiffPreviewProps> = ({ diff, syntaxTheme, input }) =
                         ...hunk,
                         lines: hunk.lines.slice(0, remainingLines)
                     });
-                    lineCount = 5;
+                    lineCount = 10;
                     break;
                 }
             }
@@ -1000,7 +1000,7 @@ const ToolExpandedContent: React.FC<ToolExpandedContentProps> = React.memo(({
                     <div className={cn(isVSCode && '-mx-2')}>
                         <CollapsibleCodeBlock
                             content={formattedOutput}
-                            collapsedLines={5}
+                            collapsedLines={10}
                             wrapLines={false}
                             showWrapToggle={true}
                             renderContent={(displayContent, wrapLines) => {
@@ -1066,7 +1066,7 @@ const ToolExpandedContent: React.FC<ToolExpandedContentProps> = React.memo(({
                 return (
                     <CollapsibleCodeBlock
                         content={formattedOutput}
-                        collapsedLines={5}
+                        collapsedLines={10}
                         wrapLines={false}
                         showWrapToggle={true}
                         renderContent={(displayContent, wrapLines) => (
@@ -1170,7 +1170,7 @@ const ToolExpandedContent: React.FC<ToolExpandedContentProps> = React.memo(({
                             {(part.tool === 'bash' || part.tool === 'shell' || part.tool === 'cmd' || part.tool === 'terminal') ? (
                                 <CollapsibleCodeBlock
                                     content={inputTextContent}
-                                    collapsedLines={5}
+                                    collapsedLines={10}
                                     wrapLines={false}
                                     showWrapToggle={true}
                                     maxHeightClass="max-h-60"
