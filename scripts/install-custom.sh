@@ -196,19 +196,6 @@ main() {
   echo "  ╰───────────────────────────────────╯"
   echo ""
 
-  # Check Node.js
-  info "Checking Node.js..."
-  NODE_VERSION=$(get_node_version)
-  
-  if [ "$NODE_VERSION" -lt "$MIN_NODE_VERSION" ]; then
-    if [ "$NODE_VERSION" -eq "0" ]; then
-      suggest_node_install
-    else
-      error "Node.js $MIN_NODE_VERSION+ required, found v$NODE_VERSION"
-      suggest_node_install
-    fi
-  fi
-  success "Node.js v$NODE_VERSION found"
 
   # Detect package manager
   info "Detecting package manager..."
