@@ -127,6 +127,13 @@ main() {
   echo "  ╰───────────────────────────────────╯"
   echo ""
 
+  # Check Bun (required)
+  info "Checking Bun..."
+  if ! check_bun; then
+    suggest_bun_install
+  fi
+  success "Bun found"
+
   # Check Node.js
   info "Checking Node.js..."
   NODE_VERSION=$(get_node_version)
@@ -140,13 +147,6 @@ main() {
     fi
   fi
   success "Node.js v$NODE_VERSION found"
-
-  # Check Bun (required)
-  info "Checking Bun..."
-  if ! check_bun; then
-    suggest_bun_install
-  fi
-  success "Bun found"
 
   # Fetch latest release
   info "Fetching latest release from GitHub..."
