@@ -4,7 +4,7 @@ import type { SupportedLanguages } from '@pierre/diffs';
 
 import { useOptionalThemeSystem } from './useThemeSystem';
 import { workerFactory } from '@/lib/diff/workerFactory';
-import { ensurePierreThemeRegistered } from '@/lib/shiki/appThemeRegistry';
+import { ensurePierreThemeRegistered } from '@/lib/diffThemes/appThemeRegistry';
 import { getDefaultTheme } from '@/lib/theme/themes';
 // NOTE: keep provider lightweight; avoid main-thread diff parsing here.
 

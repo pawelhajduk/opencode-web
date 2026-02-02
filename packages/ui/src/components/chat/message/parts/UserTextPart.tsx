@@ -18,6 +18,40 @@ const buildMentionUrl = (name: string): string => {
     return `https://opencode.ai/docs/agents/#${encoded}`;
 };
 
+const parseInlineCode = (text: string | React.ReactNode): Array<string | React.ReactNode> => {
+    if (typeof text !== 'string') return [text];
+    const codeRegex = /`([^`]+)`/g;
+    const parts: Array<string | React.ReactNode> = [];
+    let lastIndex = 0;
+    
+    const matches = Array.from(text.matchAll(codeRegex));
+    
+    for (const match of matches) {
+        if (match.index !== undefined && match.index > lastIndex) {
+            parts.push(text.slice(lastIndex, match.index));
+        }
+        if (match.index !== undefined) {
+            parts.push(
+                <code key={`code-${match.index}`} className="px-1 py-0.5 rounded bg-muted text-foreground font-mono text-sm">
+                    {match[1]}
+                </code>
+            );
+            lastIndex = match.index + match[0].length;
+        }
+    }
+    
+    if (lastIndex < text.length) {
+        parts.push(text.slice(lastIndex));
+    }
+    
+    return parts.length > 0 ? parts : [text];
+};
+
+const parseFilePaths = (text: string | React.ReactNode): React.ReactNode => {
+    if (typeof text !== 'string') return text;
+    return text;
+};
+
 const UserTextPart: React.FC<UserTextPartProps> = ({ part, messageId, agentMention }) => {
     const partWithText = part as PartWithText;
     const rawText = partWithText.text;

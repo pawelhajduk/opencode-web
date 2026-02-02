@@ -7,7 +7,7 @@ import { RiFileCopyLine, RiCheckLine, RiDownloadLine } from '@remixicon/react';
 
 import { isVSCodeRuntime } from '@/lib/desktop';
 import { useOptionalThemeSystem } from '@/contexts/useThemeSystem';
-import { getStreamdownThemePair } from '@/lib/shiki/appThemeRegistry';
+import { getStreamdownThemePair } from '@/lib/diffThemes/appThemeRegistry';
 import { getDefaultTheme } from '@/lib/theme/themes';
 
 const withStableStringId = <T extends object>(value: T, id: string): T => {
@@ -463,7 +463,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
   isStreaming = false,
   variant = 'assistant',
 }) => {
-  const syntaxThemes = useMarkdownSyntaxThemes();
+  const syntaxThemes = useMarkdownShikiThemes();
   const componentKey = React.useMemo(() => {
     const signature = part?.id ? `part-${part.id}` : `message-${messageId}`;
     return `markdown-${signature}`;
@@ -503,7 +503,7 @@ export const SimpleMarkdownRenderer: React.FC<{
   className?: string;
   variant?: MarkdownVariant;
 }> = ({ content, className, variant = 'assistant' }) => {
-  const syntaxThemes = useMarkdownSyntaxThemes();
+  const syntaxThemes = useMarkdownShikiThemes();
 
   const streamdownClassName = variant === 'tool'
     ? 'streamdown-content streamdown-tool'

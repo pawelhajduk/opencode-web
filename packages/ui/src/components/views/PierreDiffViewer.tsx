@@ -6,7 +6,7 @@ import { RiSendPlane2Line } from '@remixicon/react';
 import { useOptionalThemeSystem } from '@/contexts/useThemeSystem';
 import { ScrollableOverlay } from '@/components/ui/ScrollableOverlay';
 import { useWorkerPool } from '@/contexts/DiffWorkerProvider';
-import { ensurePierreThemeRegistered, getResolvedShikiTheme } from '@/lib/shiki/appThemeRegistry';
+import { ensurePierreThemeRegistered, getResolvedShikiTheme } from '@/lib/diffThemes/appThemeRegistry';
 import { getDefaultTheme } from '@/lib/theme/themes';
 
 import { toast } from 'sonner';
@@ -146,7 +146,6 @@ export const PierreDiffViewer: React.FC<PierreDiffViewerProps> = ({
 
   const themeSystem = useOptionalThemeSystem();
   const isDark = themeSystem?.currentTheme?.metadata?.variant === 'dark';
-  const currentThemeId = themeSystem?.currentTheme?.metadata?.id;
 
   const fallbackLight = getDefaultTheme(false);
   const fallbackDark = getDefaultTheme(true);
@@ -188,6 +187,8 @@ export const PierreDiffViewer: React.FC<PierreDiffViewerProps> = ({
   const sendMessage = useSessionStore(state => state.sendMessage);
   const currentSessionId = useSessionStore(state => state.currentSessionId);
   const { currentProviderId, currentModelId, currentAgentName, currentVariant } = useConfigStore();
+  const getSessionAgentSelection = useContextStore((state) => state.getSessionAgentSelection);
+  const getAgentModelForSession = useContextStore((state) => state.getAgentModelForSession);
   const queueModeEnabled = useMessageQueueStore(state => state.queueModeEnabled);
   const addToQueue = useMessageQueueStore(state => state.addToQueue);
   const { phase: sessionPhase } = useCurrentSessionActivity();
@@ -323,7 +324,6 @@ export const PierreDiffViewer: React.FC<PierreDiffViewerProps> = ({
       }
     }
   }, [selection, commentText, original, modified, fileName, language, sendMessage, currentSessionId, currentProviderId, currentModelId, currentAgentName, currentVariant, setActiveMainTab, queueModeEnabled, sessionPhase, addToQueue]);
-  const currentThemeId = themeSystem?.currentTheme?.metadata?.id;
 
   ensurePierreThemeRegistered(lightTheme);
   ensurePierreThemeRegistered(darkTheme);

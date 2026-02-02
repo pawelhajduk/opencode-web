@@ -2,8 +2,9 @@ import type { Theme } from '@/types/theme';
 import { presetThemes } from './presets';
 import flexokiLightRaw from './flexoki-light.json';
 import flexokiDarkRaw from './flexoki-dark.json';
-import { vercelDarkTheme } from './vercel-dark';
-import { vercelLightTheme } from './vercel-light';
+// Vercel themes available but not currently used in default theme list
+// import { vercelDarkTheme } from './vercel-dark';
+// import { vercelLightTheme } from './vercel-light';
 
 export const flexokiLightTheme = flexokiLightRaw as Theme;
 export const flexokiDarkTheme = flexokiDarkRaw as Theme;

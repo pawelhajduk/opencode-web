@@ -135,8 +135,6 @@ const VARIABLE_MAP: Record<VSCodeThemeColorToken, string> = {
   'diffEditor.insertedTextBorder': '--vscode-diffEditor-insertedTextBorder',
   'diffEditor.insertedLineBackground': '--vscode-diffEditor-insertedLineBackground',
   'diffEditor.removedTextBackground': '--vscode-diffEditor-removedTextBackground',
-  'diffEditor.removedLineBackground': '--vscode-diffEditor-removedLineBackground',
-  'diffEditor.removedTextBackground': '--vscode-diffEditor-removedTextBackground',
   'diffEditor.removedTextBorder': '--vscode-diffEditor-removedTextBorder',
   'diffEditor.removedLineBackground': '--vscode-diffEditor-removedLineBackground',
   'gitDecoration.addedResourceForeground': '--vscode-gitDecoration-addedResourceForeground',
@@ -367,8 +365,12 @@ export const buildVSCodeThemeFromPalette = (palette: VSCodeThemePalette): Theme 
   
   const accent = read('button.background', read('textLink.foreground', base.colors.primary.base));
   const accentFg = read('button.foreground', base.colors.primary.foreground || base.colors.surface.background);
+  const accentForeground = accentFg;
+  const accentHover = read('button.hoverBackground', read('textLink.activeForeground', accent));
+  const accentMuted = applyAlpha(accent, isDark ? 0.6 : 0.7);
+  
   // Action icons use icon.foreground for consistency with VSCode UI
-  const iconForeground = read('icon.foreground', foreground);
+  // const iconForeground = read('icon.foreground', foreground);
   const hoverBg = read('list.hoverBackground', read('editor.selectionBackground', base.colors.interactive.hover));
   const activeBg = read('list.activeSelectionBackground', hoverBg);
   
@@ -382,6 +384,9 @@ export const buildVSCodeThemeFromPalette = (palette: VSCodeThemePalette): Theme 
   
   // Cursor
   const cursor = read('editorCursor.foreground', base.colors.interactive.cursor);
+  
+  // Border - use multiple fallbacks for robustness
+  const effectiveBorder = read('contrastBorder', read('widget.border', read('input.border', applyAlpha(foreground, isDark ? 0.15 : 0.12))));
 
   // ===========================================
   // STATUS COLORS
@@ -440,15 +445,6 @@ export const buildVSCodeThemeFromPalette = (palette: VSCodeThemePalette): Theme 
   
   // User messages: same as chat input (subtle surface)
   const userMessageBg = subtle;
-  
-  // Use VS Code's native diff editor colors for tool output diffs
-  // These match what the user sees in the editor's diff view
-  const diffInsertedBg = palette.colors['diffEditor.insertedTextBackground']
-    ?? palette.colors['diffEditor.insertedLineBackground']
-    ?? successBg;
-  const diffRemovedBg = palette.colors['diffEditor.removedTextBackground']
-    ?? palette.colors['diffEditor.removedLineBackground']
-    ?? applyAlpha(read('editorError.foreground', base.colors.status.error), palette.kind === 'light' ? 0.12 : 0.16);
 
   return {
     ...base,
